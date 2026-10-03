@@ -1,0 +1,38 @@
+[
+    {
+        "timestamp": "2026-09-27 08:15:30",
+        "ip": "8.8.8.8",
+        "event": "login",
+        "severity": "INFO"
+    },
+    {
+        "timestamp": "2026-09-27 08:17:50",
+        "ip": "8.8.8.8",
+        "event": "failed_login",
+        "severity": "WARNING"
+    },
+    {
+        "timestamp": "2026-09-27 08:20:20",
+        "ip": "192.168.1.10",
+        "event": "server_error",
+        "severity": "CRITICAL"
+    },
+    {
+        "timestamp": "2026-09-27 08:23:10",
+        "ip": "203.0.113.25",
+        "event": "server_error",
+        "severity": "CRITICAL"
+    },
+    {
+        "timestamp": "2026-09-27 08:25:55",
+        "ip": "8.8.8.8",
+        "event": "logout",
+        "severity": "INFO"
+    },
+    {
+        "timestamp": "2026-09-27 08:27:25",
+        "ip": "192.168.1.10",
+        "event": "not_found",
+        "severity": "WARNING"
+    }
+]

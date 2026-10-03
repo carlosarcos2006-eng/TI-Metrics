@@ -1,0 +1,26 @@
+{
+    "porcentaje_http_500": 30.0,
+    "ips_criticas": [
+        "203.0.113.25",
+        "192.168.1.10"
+    ],
+    "geolocalizaciones": {
+        "203.0.113.25": {
+            "status": "success",
+            "country": "United States",
+            "countryCode": "US",
+            "region": "NY",
+            "regionName": "New York",
+            "city": "New York",
+            "zip": "000000",
+            "lat": 40.7127,
+            "lon": -74.0059,
+            "timezone": "America/New_York",
+            "isp": "TEST-NET-3",
+            "org": "TEST-NET-3 RFC5737",
+            "as": "",
+            "query": "203.0.113.25"
+        },
+        "192.168.1.10": null
+    }
+}
