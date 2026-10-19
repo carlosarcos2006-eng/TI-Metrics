@@ -133,3 +133,147 @@ al proyecto.
 * **Respuesta de la IA:** La IA indicó revisar el contenido del archivo report.json y comprobar el porcentaje de HTTP 500, las IPs críticas y la información de geolocalización obtenida para cada IP.
 * **Análisis Crítico:** Se verificó que el reporte contiene un porcentaje de HTTP 500 de 30.0%, las dos IPs críticas identificadas a partir de events.json y la información de geolocalización obtenida mediante la API. También se comprobó que la IP 192.168.1.10 aparece como null en JSON debido a que la API no proporcionó información, lo cual corresponde al comportamiento esperado. La representación null es equivalente a None en Python al serializar los datos mediante json.dump().
 * **Solución Final Aplicada:** Se validó manualmente el contenido de data/report.json después de ejecutar la integración completa. La estructura y los resultados obtenidos coinciden con los datos procesados y con las respuestas proporcionadas por la API.
+
+## Registro de Prompt #15
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/utils/data_utils.py - obtener_ips_criticas()
+* **Prompt Enviado**  "Necesito probar el comportamiento de obtener_ips_criticas() cuando recibe eventos válidos, pero ninguno tiene severidad CRITICAL. Quiero verificar que devuelva un conjunto vacío y que las IP repetidas no generen resultados incorrectos."
+* **Respuesta de la IA:** La IA propuso ejecutar una prueba aislada con eventos de severidad INFO y WARNING, llamar a la función existente y utilizar una aserción para comprobar que el resultado fuera un conjunto vacío.
+* **Análisis Crítico:** Se ejecutó la prueba utilizando tres eventos, dos de ellos asociados a la misma IP. La función devolvió set(), y el tipo del resultado fue set. La aserción se cumplió, por lo que no fue necesario modificar la implementación.
+* **Solución Final:** Se verificó mediante una prueba aislada que obtener_ips_criticas() devuelve un conjunto vacío cuando ningún evento tiene severidad CRITICAL. La prueba terminó correctamente y confirmó el comportamiento esperado para este caso.
+
+## Registro de Prompt #16
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/utils/data_utils.py - obtener_ips_criticas()
+* **Prompt Enviado**  "Necesito probar que obtener_ips_criticas() no devuelva direcciones IP duplicadas cuando una misma IP aparece en varios eventos con severidad CRITICAL. También quiero comprobar que los eventos no críticos sean excluidos del resultado."
+* **Respuesta de la IA:** La IA propuso una prueba aislada con cuatro eventos: dos eventos críticos asociados a la misma IP, otro evento crítico con una IP diferente y un evento INFO. Se utilizaron aserciones para verificar el conjunto esperado y su cantidad de elementos.
+* **Análisis Crítico:** La prueba se ejecutó correctamente. La función devolvió las dos IP críticas únicas, ignoró la IP con severidad INFO y no duplicó la dirección que aparecía en dos eventos críticos. Ambas aserciones se cumplieron.
+* **Solución Final:** Se validó el comportamiento de obtener_ips_criticas() ante IP repetidas mediante una prueba aislada. No fue necesario modificar el código fuente porque la implementación existente satisface los requisitos de esta prueba.
+
+## Registro de Prompt #17
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/utils/data_utils.py - obtener_ips_unicas()
+* **Prompt Enviado**  "Necesito comprobar el comportamiento de obtener_ips_unicas() cuando recibe una lista que contiene un registro sin la clave ip. Quiero identificar qué excepción genera la implementación actual sin modificar el código."
+* **Respuesta de la IA:** La IA propuso una prueba aislada con cinco registros que contienen tres direcciones IP diferentes y distintos códigos HTTP. Se utilizaron aserciones para verificar el conjunto esperado y la cantidad de IP únicas.
+* **Análisis Crítico:** La prueba se ejecutó correctamente. La función devolvió las tres direcciones IP esperadas, eliminó las repeticiones y no dependió del código HTTP de los registros. Ambas aserciones se cumplieron.
+* **Solución Final:** Se validó el comportamiento de obtener_ips_unicas() mediante una prueba aislada. No fue necesario modificar el código fuente porque la implementación existente satisface los requisitos de esta prueba.
+
+## Registro de Prompt #18
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/utils/data_utils.py - obtener_ips_unicas()
+* **Prompt Enviado**  "Necesito probar que obtener_ips_unicas() identifique correctamente las direcciones IP distintas de varios registros, incluso cuando algunas se repiten y los registros tienen diferentes códigos HTTP."
+* **Respuesta de la IA:** La IA propuso ejecutar una prueba aislada con tres registros, uno de ellos sin la clave ip, y utilizar un bloque try/except para capturar y mostrar la excepción.
+* **Análisis Crítico:** La prueba generó un KeyError con el mensaje 'ip'. Esto confirma que la función espera que cada registro contenga la clave requerida. El resultado coincide con la implementación actual y no demuestra por sí solo que exista un defecto, ya que depende del contrato definido para la función.
+* **Solución Final:** Se comprobó el comportamiento de la función ante un registro incompleto. No se modificó el código fuente; queda pendiente determinar si el sistema debe rechazar, informar o ignorar registros que no contienen la clave ip.
+
+## Registro de Prompt #19
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/parsers/csv_parser.py - leer_logs_csv()
+* **Prompt Enviado**  "Necesito comprobar qué ocurre cuando leer_logs_csv() recibe una ruta de archivo CSV inexistente. Quiero verificar si Python genera FileNotFoundError y capturar la excepción durante una prueba aislada, sin modificar el código fuente."
+* **Respuesta de la IA:** La IA propuso ejecutar la función con una ruta inexistente y utilizar un bloque try/except para capturar FileNotFoundError y mostrar la ruta del archivo solicitado.
+* **Análisis Crítico:** La prueba generó FileNotFoundError, y el bloque except capturó correctamente la excepción. El resultado confirmó que la función propaga el error cuando el archivo no existe. La captura se realizó en el código de prueba, no dentro de la función original.
+* **Solución Final:** Se verificó el comportamiento de leer_logs_csv() ante una ruta inexistente. No se modificó la implementación; queda pendiente decidir si la aplicación debe manejar esta excepción para proporcionar mensajes de error más claros al usuario.
+
+## Registro de Prompt #20
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/parsers/json_parser.py - leer_eventos_json()
+* **Prompt Enviado**  "Necesito comprobar el comportamiento de leer_eventos_json() cuando recibe un archivo JSON con sintaxis incorrecta. Quiero verificar que genere JSONDecodeError, capturar el mensaje y la ubicación del error y eliminar el archivo temporal al finalizar, sin modificar el código fuente."
+* **Respuesta de la IA:** La IA propuso crear un archivo temporal con contenido JSON inválido, intentar leerlo mediante leer_eventos_json(), capturar json.JSONDecodeError y mostrar el mensaje, la línea y la columna del error. También se utilizó un bloque finally para eliminar el archivo temporal.
+* **Análisis Crítico:** La prueba generó JSONDecodeError con el mensaje "Expecting ',' delimiter", en la línea 1, columna 19. La excepción se capturó correctamente y el archivo temporal se eliminó. Se confirmó que la función original propaga el error de análisis JSON.
+* **Solución Final:** Se verificó el comportamiento de leer_eventos_json() ante un archivo JSON mal formado. No fue necesario modificar el código fuente; queda pendiente decidir si la aplicación debe capturar esta excepción para proporcionar mensajes de error más claros.
+
+## Registro de Prompt #21
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/services/metrics_service.py - calcular_porcentaje_http_500()
+* **Prompt Enviado**  "Necesito comprobar que calcular_porcentaje_http_500() maneje correctamente una lista vacía, evitando la división por cero y devolviendo el resultado numérico esperado."
+* **Respuesta de la IA:** La IA propuso ejecutar una prueba aislada con una lista vacía, mostrar el porcentaje calculado y el tipo de dato devuelto, y utilizar aserciones para verificar que el resultado fuera 0.0 y de tipo float.
+* **Análisis Crítico:** La prueba se ejecutó correctamente. La función devolvió 0.0, de tipo float, y ambas aserciones se cumplieron. Esto confirmó que la implementación contempla el caso en el que no existen registros.
+* **Solución Final:** Se verificó el comportamiento de calcular_porcentaje_http_500() con una lista vacía. No fue necesario modificar el código fuente, ya que la función evita la división por cero y devuelve el valor definido para este caso.
+
+## Registro de Prompt #22
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/services/metrics_service.py - calcular_porcentaje_http_500()
+* **Prompt Enviado**  "Necesito comprobar que calcular_porcentaje_http_500() calcule correctamente el porcentaje cuando recibe registros válidos, pero ninguno tiene estado HTTP 500. Quiero verificar que el resultado sea 0.0 sin que la lista esté vacía."
+* **Respuesta de la IA:** La IA propuso una prueba aislada con tres registros que tienen estados HTTP 200, 404 y 201. Se calculó el porcentaje de errores HTTP 500 y se utilizó una aserción para verificar que el resultado fuera 0.0.
+* **Análisis Crítico:** La prueba se ejecutó correctamente. La función procesó los tres registros, identificó cero errores HTTP 500 y devolvió 0.0. La aserción se cumplió, confirmando el cálculo para una lista no vacía sin errores 500.
+* **Solución Final:** Se verificó el cálculo del porcentaje HTTP 500 cuando existen registros válidos, pero ninguno tiene estado 500. No fue necesario modificar el código fuente porque la implementación produjo el resultado esperado.
+
+## Registro de Prompt #23
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/services/metrics_service.py - calcular_porcentaje_http_500()
+* **Prompt Enviado**  "Necesito comprobar que calcular_porcentaje_http_500() calcule correctamente el porcentaje de errores cuando recibe una combinación de estados HTTP 500 y otros códigos. Quiero verificar tanto la cantidad de errores como el porcentaje final."
+* **Respuesta de la IA:** La IA propuso una prueba aislada con cuatro registros, dos con estado HTTP 500, uno con estado 200 y otro con estado 404. Se calcularon la cantidad de errores y el porcentaje, y se utilizaron aserciones para verificar ambos resultados.
+* **Análisis Crítico:** La prueba se ejecutó correctamente. De los cuatro registros, dos tenían estado HTTP 500. La función devolvió 50.0, y ambas aserciones se cumplieron. El resultado confirmó que el porcentaje se calcula correctamente con estados HTTP mixtos.
+* **Solución Final:** Se validó el cálculo del porcentaje HTTP 500 para una lista con distintos estados. No fue necesario modificar el código fuente porque la función identificó correctamente los errores y devolvió el porcentaje esperado.
+
+## Registro de Prompt #24
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** src/utils/data_utils.py - obtener_ips_unicas()
+* **Prompt Enviado**  "Necesito comprobar que obtener_ips_unicas() maneje correctamente una lista vacía y devuelva un conjunto vacío de tipo set, sin generar excepciones."
+* **Respuesta de la IA:** La IA propuso una prueba aislada con una lista vacía, mostrando la cantidad de registros, el resultado y su tipo de dato. Se utilizaron dos aserciones para verificar que el resultado fuera un conjunto vacío y que perteneciera al tipo set.
+* **Análisis Crítico:** La prueba se ejecutó correctamente. La función devolvió set(), el tipo del resultado fue set y ambas aserciones se cumplieron. Se confirmó que la implementación maneja correctamente una entrada sin registros.
+* **Solución Final:** Se verificó el comportamiento de obtener_ips_unicas() con una lista vacía. No fue necesario modificar el código fuente porque la función devolvió el resultado esperado y conservó el tipo de dato adecuado.
+
+## Registro de Prompt #25
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** Pruebas automatizadas de src/test_csv.py y validación de calcular_porcentaje_http_500() y leer_logs_csv().
+* **Prompt Enviado**  "Ejecutar la suite de pytest, revisar por qué no se detectan pruebas automatizadas y convertir las comprobaciones existentes del módulo CSV en pruebas que pytest pueda descubrir."
+* **Respuesta de la IA:** Se propuso reemplazar el contenido de src/test_csv.py por tres funciones de prueba: cálculo del porcentaje HTTP 500 con cuatro registros, cálculo con una lista vacía y lectura del CSV comprobando la cantidad de registros y el tipo entero de los estados HTTP.
+* **Análisis Crítico:** La propuesta permite pasar de comprobaciones manuales mediante impresiones a pruebas automatizadas con pytest. Las pruebas utilizan assert para comparar resultados esperados y comprobar propiedades de los datos. Sin embargo, solo cubren algunos comportamientos del módulo CSV y no garantizan la ausencia de errores en todo el sistema.
+* **Solución Final:** Se implementaron las tres pruebas en src/test_csv.py. La ejecución de python -m pytest -v recopiló tres pruebas y todas finalizaron correctamente: 3 passed in 1.39s.
+
+## Registro de Prompt #26
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** Pruebas automatizadas de src/test_json.py y validación de leer_eventos_json().
+* **Prompt Enviado**  "Revisar el archivo de pruebas del módulo JSON y convertir las comprobaciones manuales en pruebas automatizadas que permitan verificar la lectura de eventos, la estructura de los datos y el manejo de una lista JSON vacía."
+* **Respuesta de la IA:** Se propusieron tres pruebas automatizadas: verificar que el archivo contiene seis eventos y devuelve una lista, comprobar que el primer evento contiene las claves ip, event y severity, y validar la lectura de una lista JSON vacía mediante un archivo temporal creado con tmp_path.
+* **Análisis Crítico:** Las pruebas permiten verificar comportamientos normales del lector JSON y un caso límite válido. El uso de tmp_path evita modificar los archivos reales del proyecto. Sin embargo, todavía no se comprueba el comportamiento ante archivos inexistentes o JSON mal formado mediante la suite automatizada.
+* **Solución Final:** Se actualizaron las pruebas en src/test_json.py. Al ejecutar python -m pytest -v, se recopilaron seis pruebas entre los módulos CSV y JSON, y todas finalizaron correctamente: 6 passed in 2.06s.
+
+## Registro de Prompt #27
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** Pruebas automatizadas de src/test_utils.py: obtener_ips_unicas(), crear_resumen_evento() y obtener_ips_criticas().
+* **Prompt Enviado**  "Revisar las comprobaciones manuales del módulo de utilidades y convertirlas en pruebas automatizadas con pytest para verificar la eliminación de IP duplicadas, la creación de tuplas, la identificación de IP críticas, los casos con listas vacías y el uso de los eventos reales."
+* **Respuesta de la IA:** Se propusieron seis pruebas automatizadas que comprueban las tres funciones de utilidades con datos controlados y con el archivo data/events.json.
+* **Análisis Crítico:** Las pruebas verifican resultados concretos y casos límite. El uso de conjuntos permite comprobar que no se repitan las IP, mientras que isinstance() permite verificar el tipo de dato retornado. La prueba con eventos reales depende de la estructura y el contenido actual de data/events.json; por ello, si esos datos cambian, algunas expectativas también podrían necesitar actualizarse.
+* **Solución Final:** Se reemplazaron las comprobaciones manuales de src/test_utils.py por seis pruebas automatizadas. La ejecución de python -m pytest -v recopiló doce pruebas en los módulos CSV, JSON y utilidades. Todas finalizaron correctamente: 12 passed in 1.62s.
+
+## Registro de Prompt #28
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** Pruebas automatizadas de src/test_geolocation.py, para obtener_geolocalizacion() y enriquecer_ips_con_geolocalizacion().
+* **Prompt Enviado**  "Revisar el servicio de geolocalización y convertir las comprobaciones manuales en pruebas automatizadas que simulen respuestas exitosas, IP no encontrada, errores HTTP, tiempos de espera y enriquecimiento de varias IP, sin depender de la API real."
+* **Respuesta de la IA:** Se propusieron cinco pruebas con unittest.mock, Mock y patch para simular las respuestas HTTP y las excepciones de la biblioteca requests.
+* **Análisis Crítico:** Los mocks permiten comprobar el comportamiento del servicio sin depender de Internet. Las pruebas cubren respuestas exitosas, fallos reportados por la API, errores HTTP y tiempos de espera. Sin embargo, aún faltan pruebas para otras excepciones de conexión y no se comprueba todavía la generación de reportes.
+* **Solución Final:** Se actualizaron las pruebas de src/test_geolocation.py. La ejecución de python -m pytest -v recopiló 17 pruebas entre los módulos CSV, JSON, utilidades y geolocalización. Todas finalizaron correctamente: 17 passed in 1.13s.
+
+## Registro de Prompt #29
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** Pruebas automatizadas de src/test_report.py: construir_resumen() y guardar_reporte_json().
+* **Prompt Enviado**  "Revisar las comprobaciones manuales del módulo de reportes y convertirlas en pruebas automatizadas que verifiquen la construcción del resumen, la persistencia del reporte JSON y la conservación de caracteres Unicode, evitando modificar el archivo real del proyecto."
+* **Respuesta de la IA:** Se propusieron tres pruebas automatizadas con pytest: comprobar la estructura del resumen, verificar que el reporte guardado pueda leerse y coincida con los datos originales, y validar la conservación de texto Unicode. Se utilizó tmp_path para crear archivos temporales.
+* **Análisis Crítico:** Las pruebas verifican la estructura del reporte, su persistencia y la conservación de caracteres especiales. El uso de archivos temporales evita sobrescribir data/report.json. Sin embargo, todavía no se han cubierto todos los posibles errores de escritura ni los casos de entradas inválidas.
+* **Solución Final:** Se actualizaron las pruebas de src/test_report.py. La ejecución de python -m pytest -v recopiló veinte pruebas de los módulos CSV, JSON, utilidades, geolocalización y reportes. Todas finalizaron correctamente: 20 passed in 0.10s.
+
+## Registro de Prompt #30
+
+* **Fecha:** 2026-10-09
+* **Módulo/Función:** Integración principal del proyecto — src/main.py
+* **Prompt Enviado**  "Ayúdame a integrar los módulos desarrollados de TI-Metrics en main.py, de manera que el programa lea los archivos CSV y JSON, calcule el porcentaje de errores HTTP 500, identifique las IP críticas, consulte la geolocalización y guarde un reporte JSON. Explícame los cambios paso a paso y cómo verificar que la integración funcione."
+* **Respuesta de la IA:** Se propuso una función main() que coordina los analizadores CSV y JSON, los servicios de métricas y geolocalización, las utilidades de procesamiento de datos y el servicio de generación de reportes. También se indicaron comandos para ejecutar el programa, validar el reporte JSON y correr la suite de pruebas con pytest -v.
+* **Análisis Crítico:** La propuesta permite centralizar la ejecución del sistema sin duplicar la lógica implementada en los módulos existentes. Se verificó que el programa calcula un 30.0 % de errores HTTP 500, identifica dos IP críticas y genera data/report.json. La salida del reporte también mostró que 192.168.1.10 no tiene geolocalización pública disponible. Aunque la API devolvió coordenadas para 203.0.113.25, esta IP pertenece al bloque TEST-NET-3 reservado para documentación, por lo que esos datos no representan una ubicación real. Finalmente, las 20 pruebas automatizadas pasaron correctamente.
+* **Solución Final:** Se integraron los módulos existentes en src/main.py y se ejecutó python src/main.py. Se verificó el contenido y la validez de data/report.json mediante python -m json.tool data/report.json. Después se ejecutó pytest -v, obteniendo 20 pruebas aprobadas y 0 fallidas. La integración quedó verificada para los datos y escenarios probados.

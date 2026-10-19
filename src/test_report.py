@@ -1,52 +1,65 @@
-import os
-from parsers.csv_parser import leer_logs_csv
-from parsers.json_parser import leer_eventos_json
-from services.metrics_service import calcular_porcentaje_http_500
-from services.geolocation_service import enriquecer_ips_con_geolocalizacion
+
+import json
+
 from services.report_service import (
     construir_resumen,
-    guardar_reporte_json
-)
-from utils.data_utils import obtener_ips_criticas
-
-
-ruta_csv = "data/logs.csv"
-ruta_json = "data/events.json"
-ruta_reporte = "data/report.json"
-
-
-registros = leer_logs_csv(ruta_csv)
-
-eventos = leer_eventos_json(ruta_json)
-
-
-porcentaje_500 = calcular_porcentaje_http_500(registros)
-
-ips_criticas = obtener_ips_criticas(eventos)
-
-geolocalizaciones = enriquecer_ips_con_geolocalizacion(
-    ips_criticas
+    guardar_reporte_json,
 )
 
 
-resumen = construir_resumen(
-    porcentaje_500,
-    ips_criticas,
-    geolocalizaciones
-)
+def test_construir_resumen():
+    porcentaje_500 = 30.0
+    ips_criticas = {"192.168.1.10", "203.0.113.25"}
+    geolocalizaciones = {
+        "192.168.1.10": None,
+        "203.0.113.25": {
+            "status": "success",
+            "country": "United States",
+        },
+    }
+
+    resumen = construir_resumen(
+        porcentaje_500,
+        ips_criticas,
+        geolocalizaciones,
+    )
+
+    assert resumen["porcentaje_http_500"] == 30.0
+    assert set(resumen["ips_criticas"]) == ips_criticas
+    assert resumen["geolocalizaciones"] == geolocalizaciones
 
 
-guardar_reporte_json(
-    resumen,
-    ruta_reporte
-)
+def test_guardar_reporte_json(tmp_path):
+    ruta_reporte = tmp_path / "report.json"
+
+    resumen = {
+        "porcentaje_http_500": 30.0,
+        "ips_criticas": ["192.168.1.10"],
+        "geolocalizaciones": {
+            "192.168.1.10": None,
+        },
+    }
+
+    guardar_reporte_json(resumen, ruta_reporte)
+
+    assert ruta_reporte.exists()
+
+    with open(ruta_reporte, "r", encoding="utf-8") as archivo:
+        contenido = json.load(archivo)
+
+    assert contenido == resumen
 
 
-print("Resumen generado:")
-print(resumen)
+def test_guardar_reporte_json_con_texto_unicode(tmp_path):
+    ruta_reporte = tmp_path / "report_unicode.json"
 
-print("\nArchivo generado:")
-print(ruta_reporte)
+    resumen = {
+        "mensaje": "Geolocalización de Quito",
+    }
 
-print("\n¿El archivo existe?")
-print(os.path.exists(ruta_reporte))
+    guardar_reporte_json(resumen, ruta_reporte)
+
+    with open(ruta_reporte, "r", encoding="utf-8") as archivo:
+        contenido = json.load(archivo)
+
+    assert contenido == resumen
