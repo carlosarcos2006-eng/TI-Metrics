@@ -33,3 +33,36 @@ def test_leer_json_con_lista_vacia(tmp_path):
 
     assert eventos == []
     assert isinstance(eventos, list)
+
+def test_leer_json_archivo_inexistente(tmp_path):
+    import pytest
+
+    ruta = tmp_path / "eventos_inexistentes.json"
+
+    with pytest.raises(FileNotFoundError, match="No se encontró"):
+        leer_eventos_json(ruta)
+
+
+def test_leer_json_contenido_invalido(tmp_path):
+    import pytest
+
+    ruta = tmp_path / "eventos_invalidos.json"
+
+    ruta.write_text(
+        '{"eventos": [}',
+        encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="datos inválidos"):
+        leer_eventos_json(ruta)
+
+
+def test_leer_json_archivo_vacio(tmp_path):
+    import pytest
+
+    ruta = tmp_path / "eventos_vacios.json"
+
+    ruta.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="datos inválidos"):
+        leer_eventos_json(ruta)

@@ -22,3 +22,16 @@ def obtener_ips_criticas(eventos):
             ips_criticas.add(evento["ip"])
 
     return ips_criticas
+
+def deduplicar_eventos(eventos):
+    eventos_unicos = []
+    eventos_vistos = set()
+
+    for evento in eventos:
+        identificador = tuple(sorted(evento.items()))
+
+        if identificador not in eventos_vistos:
+            eventos_vistos.add(identificador)
+            eventos_unicos.append(evento)
+
+    return eventos_unicos

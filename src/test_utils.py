@@ -5,7 +5,7 @@ from utils.data_utils import (
     crear_resumen_evento,
     obtener_ips_criticas
 )
-
+from src.utils.data_utils import deduplicar_eventos
 
 def test_obtener_ips_unicas():
     registros = [
@@ -68,3 +68,33 @@ def test_utilidades_con_eventos_reales():
     assert len(ips_criticas) == 2
     assert isinstance(resumen, tuple)
     assert len(resumen) == 3
+
+def test_deduplicar_eventos_repetidos():
+    eventos = [
+        {"ip": "192.168.1.10", "event": "login", "severity": "INFO"},
+        {"ip": "192.168.1.10", "event": "login", "severity": "INFO"},
+        {"ip": "8.8.8.8", "event": "error", "severity": "CRITICAL"}
+    ]
+
+    resultado = deduplicar_eventos(eventos)
+
+    assert len(resultado) == 2
+    assert resultado[0] == eventos[0]
+    assert resultado[1] == eventos[2]
+
+
+def test_deduplicar_eventos_sin_duplicados():
+    eventos = [
+        {"ip": "192.168.1.10", "event": "login"},
+        {"ip": "192.168.1.10", "event": "logout"}
+    ]
+
+    resultado = deduplicar_eventos(eventos)
+
+    assert resultado == eventos
+
+
+def test_deduplicar_eventos_lista_vacia():
+    resultado = deduplicar_eventos([])
+
+    assert resultado == []

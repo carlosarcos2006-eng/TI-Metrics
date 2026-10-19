@@ -31,3 +31,42 @@ def test_leer_logs_csv():
 
     assert len(registros) == 10
     assert all(isinstance(registro["status"], int) for registro in registros)
+
+
+def test_leer_csv_archivo_inexistente(tmp_path):
+    import pytest
+
+    ruta = tmp_path / "archivo_inexistente.csv"
+
+    with pytest.raises(FileNotFoundError, match="No se encontró"):
+        leer_logs_csv(ruta)
+
+
+def test_leer_csv_status_invalido(tmp_path):
+    import pytest
+
+    ruta = tmp_path / "logs_invalidos.csv"
+
+    ruta.write_text(
+        "ip,status,response_time\n"
+        "192.168.1.10,ERROR,120\n",
+        encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="fila 2"):
+        leer_logs_csv(ruta)
+
+
+def test_leer_csv_response_time_invalido(tmp_path):
+    import pytest
+
+    ruta = tmp_path / "logs_invalidos.csv"
+
+    ruta.write_text(
+        "ip,status,response_time\n"
+        "192.168.1.10,500,INVALIDO\n",
+        encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="fila 2"):
+        leer_logs_csv(ruta)

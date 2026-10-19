@@ -304,3 +304,21 @@ al proyecto.
 * **Respuesta de la IA:** Se propuso crear src/test_main.py para verificar la coordinación de los módulos y añadir test_obtener_geolocalizacion_error_conexion() para simular requests.exceptions.ConnectionError.
 * **Análisis Crítico:** Las pruebas permiten verificar el comportamiento sin depender de llamadas reales a la API. La cobertura llegó al 99 %; main.py mantiene una línea sin ejecutar porque la prueba llama directamente a la función y no ejecuta el archivo como programa.
 * **Solución Final:** Se añadieron las pruebas de integración y de error de conexión. La suite completa terminó con 22 pruebas aprobadas, cobertura global del 99 % y cobertura del 100 % en geolocation_service.py. No fue necesario modificar la implementación del servicio.
+
+## Registro de Prompt #34
+
+* **Fecha:** 2026-10-10
+* **Módulo/Función:** Auditoría general de TI-Metrics — Hito 1.
+* **Prompt Enviado**  "Revisar el proyecto TI-Metrics completo y compararlo con los requisitos del Hito 1, considerando que el avance se presentará el 21 de octubre y que no se debe adelantar el Hito 2."
+* **Respuesta de la IA:** Se revisaron los módulos de lectura CSV/JSON, procesamiento de datos, métricas, consumo de API REST, generación de reportes, pruebas y documentación. Se identificó que el flujo principal está implementado y que conviene revisar el manejo de excepciones de archivos y la deduplicación de eventos.
+* **Análisis Crítico:** La existencia de pruebas automatizadas y una cobertura elevada no garantiza por sí sola el cumplimiento completo de la consigna. Es necesario contrastar las funcionalidades con la rúbrica y evitar refactorizaciones de POO que pertenecen al Hito 2.
+* **Solución Final:** Se realizó una auditoría sin modificar el código. Se decidió conservar la arquitectura actual y priorizar únicamente las verificaciones y correcciones necesarias para el Hito 1.
+
+## Registro de Prompt #35
+
+* **Fecha:** 2026-10-10
+* **Módulo/Función:** Manejo de excepciones, deduplicación de eventos y pruebas automatizadas — Hito 1.
+* **Prompt Enviado**  "Ayúdame a completar los requisitos pendientes del Hito 1 de TI-Metrics. Necesito mejorar el manejo de excepciones en los lectores CSV y JSON, implementar la deduplicación de eventos mediante conjuntos (set), integrar la función en main.py y comprobar que el sistema continúa funcionando mediante pruebas automatizadas."
+* **Respuesta de la IA:** Se propuso incorporar bloques try/except en csv_parser.py y json_parser.py para controlar archivos inexistentes, problemas de permisos y datos inválidos. Se implementó deduplicar_eventos() en data_utils.py, utilizando un conjunto de identificadores construidos mediante tuplas. También se recomendó integrar esta función en main.py antes de identificar las IPs críticas y ampliar las pruebas con pytest.
+* **Análisis Crítico:** Se decidió conservar las excepciones en lugar de devolver listas vacías cuando falla la lectura, para evitar generar métricas incorrectas. La deduplicación compara eventos completos y no solamente sus direcciones IP, porque una misma IP puede generar diferentes eventos legítimos. Se comprobó que los seis eventos del archivo original son únicos. La implementación de deduplicación es adecuada para los datos actuales, cuyos valores son simples; si se incorporan estructuras anidadas, será necesario adaptar la construcción del identificador. Las pruebas permiten comprobar los casos normales y las situaciones de error sin modificar los archivos originales.
+* **Solución Final:** Se actualizaron los lectores CSV y JSON, se añadió deduplicar_eventos() y se integró su ejecución en main.py. Se incorporaron nueve pruebas nuevas, alcanzando 31 pruebas aprobadas, cero fallidas y 99 % de cobertura global. Finalmente, se ejecutó python src/main.py, obteniendo un porcentaje de errores HTTP 500 del 30.0 %, dos IPs críticas y la generación correcta de data/report.json.

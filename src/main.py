@@ -7,7 +7,7 @@ from services.report_service import (
     construir_resumen,
     guardar_reporte_json,
 )
-from utils.data_utils import obtener_ips_criticas
+from utils.data_utils import obtener_ips_criticas, deduplicar_eventos
 
 
 def main():
@@ -19,6 +19,8 @@ def main():
 
     registros = leer_logs_csv(ruta_csv)
     eventos = leer_eventos_json(ruta_json)
+
+    eventos = deduplicar_eventos(eventos)
 
     porcentaje_500 = calcular_porcentaje_http_500(registros)
     ips_criticas = obtener_ips_criticas(eventos)
