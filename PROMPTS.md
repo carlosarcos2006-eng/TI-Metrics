@@ -277,3 +277,30 @@ al proyecto.
 * **Respuesta de la IA:** Se propuso una función main() que coordina los analizadores CSV y JSON, los servicios de métricas y geolocalización, las utilidades de procesamiento de datos y el servicio de generación de reportes. También se indicaron comandos para ejecutar el programa, validar el reporte JSON y correr la suite de pruebas con pytest -v.
 * **Análisis Crítico:** La propuesta permite centralizar la ejecución del sistema sin duplicar la lógica implementada en los módulos existentes. Se verificó que el programa calcula un 30.0 % de errores HTTP 500, identifica dos IP críticas y genera data/report.json. La salida del reporte también mostró que 192.168.1.10 no tiene geolocalización pública disponible. Aunque la API devolvió coordenadas para 203.0.113.25, esta IP pertenece al bloque TEST-NET-3 reservado para documentación, por lo que esos datos no representan una ubicación real. Finalmente, las 20 pruebas automatizadas pasaron correctamente.
 * **Solución Final:** Se integraron los módulos existentes en src/main.py y se ejecutó python src/main.py. Se verificó el contenido y la validez de data/report.json mediante python -m json.tool data/report.json. Después se ejecutó pytest -v, obteniendo 20 pruebas aprobadas y 0 fallidas. La integración quedó verificada para los datos y escenarios probados.
+
+## Registro de Prompt #31
+
+* **Fecha:** 2026-10-10
+* **Módulo/Función:** Revisión de calidad y cobertura de pruebas — proyecto TI-Metrics.
+* **Prompt Enviado**  "Continuemos con el proyecto TI-Metrics después de integrar el flujo principal, publicar el commit 22f4d70 y confirmar que las 20 pruebas automatizadas pasan."
+* **Respuesta de la IA:** Se propuso iniciar una revisión de calidad mediante el análisis de cobertura de pruebas con pytest-cov, antes de decidir qué módulos necesitan refactorización o pruebas adicionales.
+* **Análisis Crítico:** Tener pruebas aprobadas demuestra que los casos implementados funcionan, pero no garantiza que todas las líneas y ramas relevantes estén cubiertas. Primero se deben medir los resultados y comprobar si la herramienta está disponible en el entorno virtual.
+* **Solución Final:** Ejecutar python -m pytest --cov=src --cov-report=term-missing, analizar los porcentajes y las líneas no cubiertas, y priorizar las mejoras según los resultados obtenidos, manteniendo como referencia una cobertura mínima del 80 %.
+
+## Registro de Prompt #32
+
+* **Fecha:** 2026-10-10
+* **Módulo/Función:** Análisis de cobertura de pruebas y planificación de pruebas de integración — src/main.py.
+* **Prompt Enviado**  "Interpretar el informe de cobertura de TI-Metrics, identificar los módulos que necesitan pruebas adicionales y continuar el proyecto paso a paso."
+* **Respuesta de la IA:** Se analizó el resultado de 20 pruebas aprobadas y una cobertura total del 89 %. Se identificó que src/main.py tiene un 0 % de cobertura y que src/services/geolocation_service.py tiene un 90 %. Se priorizó revisar la integración principal antes de añadir nuevas pruebas.
+* **Análisis Crítico:** Una cobertura alta no garantiza por sí sola la ausencia de errores. La función principal debe probarse sin depender de llamadas de red reales ni de cambios en los archivos de datos.
+* **Solución Final:** Inspeccionar src/main.py, diseñar pruebas de integración con dependencias simuladas y ejecutar nuevamente la suite para verificar que el comportamiento existente se conserva y mejora la cobertura.
+
+## Registro de Prompt #33
+
+* **Fecha:** 2026-10-10
+* **Módulo/Función:** Pruebas de integración de main.py y manejo de errores de geolocalización.
+* **Prompt Enviado**  "Diseñar pruebas con mocks para aumentar la cobertura de src/main.py y comprobar el manejo de errores de conexión en src/services/geolocation_service.py."
+* **Respuesta de la IA:** Se propuso crear src/test_main.py para verificar la coordinación de los módulos y añadir test_obtener_geolocalizacion_error_conexion() para simular requests.exceptions.ConnectionError.
+* **Análisis Crítico:** Las pruebas permiten verificar el comportamiento sin depender de llamadas reales a la API. La cobertura llegó al 99 %; main.py mantiene una línea sin ejecutar porque la prueba llama directamente a la función y no ejecuta el archivo como programa.
+* **Solución Final:** Se añadieron las pruebas de integración y de error de conexión. La suite completa terminó con 22 pruebas aprobadas, cobertura global del 99 % y cobertura del 100 % en geolocation_service.py. No fue necesario modificar la implementación del servicio.
