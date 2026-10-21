@@ -156,7 +156,7 @@ al proyecto.
 
 * **Fecha:** 2026-10-09
 * **Módulo/Función:** src/utils/data_utils.py - obtener_ips_unicas()
-* **Prompt Enviado**  "Necesito comprobar el comportamiento de obtener_ips_unicas() cuando recibe una lista que contiene un registro sin la clave ip. Quiero identificar qué excepción genera la implementación actual sin modificar el código."
+* **Prompt Enviado**  "Necesito probar que obtener_ips_unicas() identifique correctamente las direcciones IP distintas de varios registros, incluso cuando algunas se repiten y los registros tienen diferentes códigos HTTP."
 * **Respuesta de la IA:** La IA propuso una prueba aislada con cinco registros que contienen tres direcciones IP diferentes y distintos códigos HTTP. Se utilizaron aserciones para verificar el conjunto esperado y la cantidad de IP únicas.
 * **Análisis Crítico:** La prueba se ejecutó correctamente. La función devolvió las tres direcciones IP esperadas, eliminó las repeticiones y no dependió del código HTTP de los registros. Ambas aserciones se cumplieron.
 * **Solución Final:** Se validó el comportamiento de obtener_ips_unicas() mediante una prueba aislada. No fue necesario modificar el código fuente porque la implementación existente satisface los requisitos de esta prueba.
@@ -165,7 +165,7 @@ al proyecto.
 
 * **Fecha:** 2026-10-09
 * **Módulo/Función:** src/utils/data_utils.py - obtener_ips_unicas()
-* **Prompt Enviado**  "Necesito probar que obtener_ips_unicas() identifique correctamente las direcciones IP distintas de varios registros, incluso cuando algunas se repiten y los registros tienen diferentes códigos HTTP."
+* **Prompt Enviado**  "Necesito comprobar el comportamiento de obtener_ips_unicas() cuando recibe una lista que contiene un registro sin la clave ip. Quiero identificar qué excepción genera la implementación actual sin modificar el código.."
 * **Respuesta de la IA:** La IA propuso ejecutar una prueba aislada con tres registros, uno de ellos sin la clave ip, y utilizar un bloque try/except para capturar y mostrar la excepción.
 * **Análisis Crítico:** La prueba generó un KeyError con el mensaje 'ip'. Esto confirma que la función espera que cada registro contenga la clave requerida. El resultado coincide con la implementación actual y no demuestra por sí solo que exista un defecto, ya que depende del contrato definido para la función.
 * **Solución Final:** Se comprobó el comportamiento de la función ante un registro incompleto. No se modificó el código fuente; queda pendiente determinar si el sistema debe rechazar, informar o ignorar registros que no contienen la clave ip.
