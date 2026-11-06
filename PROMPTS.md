@@ -382,3 +382,14 @@ al proyecto.
 * **Respuesta de la IA:** Se propuso implementar la clase `GeolocationService` con atributos protegidos `_url_base` y `_timeout`, propiedades de solo lectura y métodos para consultar y enriquecer direcciones IP. Se conservaron las funciones originales como interfaces de compatibilidad. También se proporcionaron pruebas unitarias utilizando `pytest` y `unittest.mock`.
 * **Análisis Crítico:** Durante las primeras ejecuciones se detectaron errores de escritura en la URL de la API y en el nombre `requests.exceptions`. Las pruebas permitieron identificar estos problemas mediante mensajes de error y comprobar las correcciones. Se verificó que las solicitudes HTTP continuaran siendo simuladas durante las pruebas. Se mantuvo la URL HTTP original por compatibilidad, reconociendo que no proporciona cifrado.
 * **Solución Final:** Se implementó `GeolocationService` con configuración validada, encapsulamiento y métodos de instancia. Se conservaron las funciones del Hito 1 y se añadieron 13 pruebas nuevas. Las 6 pruebas originales de geolocalización aprobaron y la suite completa del proyecto finalizó con 55 pruebas aprobadas y ningún fallo.
+
+
+
+## Registro de Prompt #42
+
+* **Fecha:** 2026-11-02
+* **Módulo/Función:** `src/services/report_service.py` y `src/test_report_service.py` — Refactorización orientada a objetos del servicio de reportes.
+* **Prompt Enviado:** "Necesito continuar la refactorización del Hito 2 de TI-Metrics. Analiza el servicio de reportes y sus pruebas existentes para implementar una clase ReportService con encapsulamiento, propiedades @property y validación de parámetros, conservando la compatibilidad con las funciones del Hito 1."
+* **Respuesta de la IA:** Se propuso implementar la clase `ReportService` con el atributo protegido `_indentacion`, una propiedad de solo lectura y métodos para construir resúmenes y guardar archivos JSON. Se conservaron las funciones originales como interfaces de compatibilidad y se proporcionaron pruebas unitarias con `pytest`.
+* **Análisis Crítico:** Durante la primera ejecución de las pruebas se detectó que el método `guardar_reporte_json()` contenía únicamente la instrucción `pass`, por lo que no generaba archivos. Se revisó el código y se reemplazó dicha instrucción por la implementación de escritura mediante `json.dump()`. Las pruebas confirmaron que los reportes se guardan correctamente, conservando los caracteres Unicode y permitiendo configurar la indentación.
+* **Solución Final:** Se implementó `ReportService` con encapsulamiento, validación del constructor, propiedad `@property` y métodos de instancia. Se mantuvieron las funciones originales para conservar la compatibilidad con el Hito 1. Se añadieron 11 pruebas nuevas, las 3 pruebas originales de reportes aprobaron y la suite completa de TI-Metrics finalizó con 66 pruebas aprobadas y ningún fallo.
