@@ -1,13 +1,11 @@
 
-from parsers.csv_parser import leer_logs_csv
-from parsers.json_parser import leer_eventos_json
-from services.metrics_service import calcular_porcentaje_http_500
-from services.geolocation_service import enriquecer_ips_con_geolocalizacion
-from services.report_service import (
-    construir_resumen,
-    guardar_reporte_json,
-)
-from utils.data_utils import obtener_ips_criticas, deduplicar_eventos
+from src.parsers.csv_parser import CSVLogParser
+from src.parsers.json_parser import JSONLogParser
+from src.services.metrics_service import MetricsService
+from src.services.geolocation_service import GeolocationService
+from src.services.report_service import ReportService
+from src.utils.data_utils import obtener_ips_criticas, deduplicar_eventos
+
 
 
 def main():
@@ -17,30 +15,42 @@ def main():
     ruta_json = "data/events.json"
     ruta_reporte = "data/report.json"
 
-    registros = leer_logs_csv(ruta_csv)
-    eventos = leer_eventos_json(ruta_json)
+    parser_csv = CSVLogParser(ruta_csv)
+    parser_json = JSONLogParser(ruta_json)
+
+    registros = parser_csv.leer()
+    eventos = parser_json.leer()
 
     eventos = deduplicar_eventos(eventos)
 
-    porcentaje_500 = calcular_porcentaje_http_500(registros)
+    servicio_metricas = MetricsService(registros)
+    porcentaje_500 = servicio_metricas.calcular_porcentaje_http_500()
+
     ips_criticas = obtener_ips_criticas(eventos)
 
-    geolocalizaciones = enriquecer_ips_con_geolocalizacion(
-        ips_criticas
+    servicio_geolocalizacion = GeolocationService()
+    geolocalizaciones = (
+        servicio_geolocalizacion.enriquecer_ips_con_geolocalizacion(
+            ips_criticas
+        )
     )
 
-    resumen = construir_resumen(
+    servicio_reportes = ReportService()
+
+    resumen = servicio_reportes.construir_resumen(
         porcentaje_500,
         ips_criticas,
         geolocalizaciones,
     )
 
-    guardar_reporte_json(resumen, ruta_reporte)
+    servicio_reportes.guardar_reporte_json(
+        resumen,
+        ruta_reporte,
+    )
 
     print("Porcentaje HTTP 500:", porcentaje_500, "%")
     print("Cantidad de IP críticas:", len(ips_criticas))
     print("Reporte generado en:", ruta_reporte)
-
 
 if __name__ == "__main__":
     main()
