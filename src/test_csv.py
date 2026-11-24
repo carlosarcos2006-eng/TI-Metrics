@@ -70,3 +70,16 @@ def test_leer_csv_response_time_invalido(tmp_path):
 
     with pytest.raises(ValueError, match="fila 2"):
         leer_logs_csv(ruta)
+
+def test_leer_csv_sin_permisos():
+    import pytest
+    from unittest.mock import patch
+
+    ruta = "data/logs.csv"
+
+    with patch("builtins.open", side_effect=PermissionError):
+        with pytest.raises(
+            PermissionError,
+            match="No tienes permisos para leer el archivo CSV"
+        ):
+            leer_logs_csv(ruta)
