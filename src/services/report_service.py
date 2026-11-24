@@ -1,6 +1,4 @@
 import json
-from encodings import utf_8
-
 
 class ReportService:
     def __init__(self, indentacion: int = 4):
@@ -22,12 +20,17 @@ class ReportService:
             ips_criticas,
             geolocalizaciones
     ) -> dict:
+
+        if isinstance(ips_criticas, (set, frozenset)):
+            ips_ordenadas = sorted(ips_criticas)
+        else:
+            ips_ordenadas = list(ips_criticas)
+
         resumen = {
             "porcentaje_http_500": porcentaje_500,
-            "ips_criticas": list(ips_criticas),
+            "ips_criticas": ips_ordenadas,
             "geolocalizaciones": geolocalizaciones
         }
-
         return resumen
 
     def guardar_reporte_json(self, resumen, ruta_archivo) -> None:
@@ -37,7 +40,6 @@ class ReportService:
                       indent=self._indentacion,
                       ensure_ascii=False
             )
-
 
 def construir_resumen(porcentaje_500, ips_criticas, geolocalizaciones):
     servicio = ReportService()

@@ -59,3 +59,24 @@ def test_metrics_service_protege_lista_devuelta():
     registros_obtenidos.append({"status": 200})
 
     assert servicio.calcular_porcentaje_http_500() == 100.0
+
+def test_metrics_service_protege_diccionarios_originales():
+    """Comprueba la independencia de los diccionarios recibidos."""
+    registros = [{"status": 500}]
+    servicio = MetricsService(registros)
+
+    registros[0]["status"] = 200
+
+    assert servicio.registros == [{"status": 500}]
+    assert servicio.calcular_porcentaje_http_500() == 100.0
+
+
+def test_metrics_service_protege_diccionarios_devueltos():
+    """Comprueba la independencia de los diccionarios consultados."""
+    servicio = MetricsService([{"status": 500}])
+
+    registros_obtenidos = servicio.registros
+    registros_obtenidos[0]["status"] = 200
+
+    assert servicio.registros == [{"status": 500}]
+    assert servicio.calcular_porcentaje_http_500() == 100.0

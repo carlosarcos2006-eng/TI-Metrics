@@ -1,12 +1,11 @@
 import requests
-from coverage import results
-
 
 class GeolocationService:
-    def __init__(self,
-                 url_base: str = "http://ip-api.com/json",
-                 timeout: int = 5
-    ):
+    def __init__(
+            self,
+            url_base: str = "http://ip-api.com/json",
+            timeout: int | float = 5
+    ) -> None:
         if not isinstance(url_base, str):
             raise TypeError("La URL base debe ser una cadena de texto.")
 

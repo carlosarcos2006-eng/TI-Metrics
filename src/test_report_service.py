@@ -72,3 +72,45 @@ def test_metodo_guardar_reporte_json(tmp_path):
     assert contenido_json == resumen
     assert '\n  "mensaje"' in contenido_texto
     assert "Geolocalización de Quito" in contenido_texto
+
+def test_construir_resumen_ordena_conjunto_ips():
+    """Comprueba el orden determinista de las IP de un conjunto."""
+    servicio = ReportService()
+
+    ips_criticas = {
+        "203.0.113.25",
+        "192.168.1.10",
+        "8.8.8.8",
+        "1.1.1.1",
+    }
+
+    resumen = servicio.construir_resumen(
+        30.0,
+        ips_criticas,
+        {}
+    )
+
+    assert resumen["ips_criticas"] == [
+        "1.1.1.1",
+        "192.168.1.10",
+        "203.0.113.25",
+        "8.8.8.8",
+    ]
+
+def test_construir_resumen_conserva_orden_lista_ips():
+    """Comprueba que se conserva el orden de una lista recibida."""
+    servicio = ReportService()
+
+    ips_criticas = [
+        "8.8.8.8",
+        "1.1.1.1",
+        "192.168.1.10",
+    ]
+
+    resumen = servicio.construir_resumen(
+        30.0,
+        ips_criticas,
+        {}
+    )
+
+    assert resumen["ips_criticas"] == ips_criticas

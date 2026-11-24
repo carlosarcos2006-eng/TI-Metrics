@@ -1,12 +1,16 @@
+from copy import deepcopy
+
 class MetricsService:
     def __init__(self, registros: list):
         if not isinstance(registros, list):
-            raise TypeError("Los registros deben proporcionarse como una lista.")
-        self._registros = registros.copy()
+            raise TypeError(
+                "Los registros deben proporcionarse como una lista."
+            )
+        self._registros = deepcopy(registros)
 
     @property
     def registros(self) -> list:
-        return self._registros.copy()
+        return deepcopy(self._registros)
 
     def calcular_porcentaje_http_500(self) -> float:
         total_registros = len(self._registros)
@@ -16,10 +20,9 @@ class MetricsService:
 
         errores_500 = 0
 
-        for registro in self.registros:
+        for registro in self._registros:
             if registro["status"] == 500:
                 errores_500 += 1
-
         porcentaje = (errores_500 / total_registros) * 100
         return porcentaje
 
