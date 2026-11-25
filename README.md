@@ -68,8 +68,15 @@ con la cobertura exclusiva de producción medida en el Hito 2.
 
 ## 4. Hito 2: Refactorización a Arquitectura Orientada a Objetos y UML
 
-**Estado:** implementación, pruebas y auditoría técnica completadas.
-Consolidación documental y preparación de la entrega en curso.
+**Estado:** implementación, pruebas, auditoría técnica e integración
+en la rama principal completadas.
+
+La arquitectura del Hito 2 fue incorporada en main mediante el
+[Pull Request #1](https://github.com/carlosarcos2006-eng/TI-Metrics/pull/1),
+conservando el historial de desarrollo.
+
+La consolidación documental y la preparación final de la entrega
+se encuentran en curso.
 
 **Badge asociado al hito:** OOP Architect.
 
@@ -291,15 +298,17 @@ git clone https://github.com/carlosarcos2006-eng/TI-Metrics.git
 cd TI-Metrics
 ```
 
-Mientras el Hito 2 se encuentre en su rama de desarrollo,
-seleccionar dicha rama:
+El Hito 2 se encuentra integrado en la rama principal `main`.
+
+Para seleccionar y actualizar esta rama:
 
 ```bash
-git switch feat/hito2-poo
+git switch main
+git pull --ff-only origin main
 ```
 
-Una vez integrado el Hito 2 en la rama principal, utilizar
-la versión correspondiente de `main`.
+La rama `feat/hito2-poo` se conserva como referencia histórica
+del desarrollo de la arquitectura orientada a objetos.
 
 ### 9.2. Crear un entorno virtual
 
@@ -431,6 +440,30 @@ excluyendo los archivos de pruebas del cálculo.
 | Sentencias cubiertas | 357 |
 | Sentencias no cubiertas | 1 |
 | Cobertura de producción | 99.72 % |
+
+### Validación posterior a la integración
+
+Después de incorporar el Pull Request #1, se ejecutó nuevamente
+la suite completa de pruebas desde la rama main.
+
+| Indicador | Resultado |
+|---|---:|
+| Rama evaluada | main |
+| Merge commit evaluado | 92a0e1d |
+| Pruebas aprobadas | 478 |
+| Pruebas fallidas | 0 |
+| Sentencias de producción | 358 |
+| Sentencias cubiertas | 357 |
+| Sentencias no cubiertas | 1 |
+| Cobertura de producción | 99.72 % |
+| Tiempo de ejecución observado | 1.09 s |
+
+Los resultados de aprobación y cobertura coinciden con la
+validación realizada antes de la integración definitiva.
+
+No se detectaron regresiones mediante la suite automatizada.
+Esta comprobación no sustituye la validación operativa final
+ni garantiza la ausencia absoluta de defectos.
 
 ### Distribución de pruebas
 
@@ -566,9 +599,14 @@ técnica y orientar futuras mejoras.
 | Hito 2: Validaciones y pruebas automatizadas | Completado |
 | Hito 2: Diagramas UML y auditoría de requerimientos | Completado |
 | Hito 2: Consolidación documental | En curso |
-| Hito 2: Integración y validación final | Pendiente |
+| Hito 2: Integración en la rama principal | Completado |
+| Hito 2: Regresión posterior a la integración | Completado |
+| Hito 2: Validación operativa y entrega final | Pendiente |
 | Hito 3: Consolidación de calidad, auditoría y defensa oral | Pendiente |
 
-El proyecto continuará con la integración de los cambios,
-la validación final de los entregables y la preparación
-de la defensa académica.
+La integración del Hito 2 en la rama principal se encuentra
+completada mediante el Pull Request #1.
+
+El proyecto continuará con el cierre documental, la validación
+operativa final de los entregables y la preparación de la
+defensa académica.
