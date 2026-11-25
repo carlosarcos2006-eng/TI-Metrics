@@ -1,3 +1,7 @@
+from copy import deepcopy
+from pathlib import Path
+import re
+
 import pytest
 
 from src.parsers.json_parser import leer_eventos_json
@@ -18,6 +22,7 @@ def test_obtener_ips_unicas():
 
     resultado = obtener_ips_unicas(registros)
 
+    assert isinstance(resultado, set)
     assert resultado == {"10.0.0.1", "10.0.0.2"}
     assert len(resultado) == 2
 
@@ -50,6 +55,7 @@ def test_obtener_ips_criticas():
 
     resultado = obtener_ips_criticas(eventos)
 
+    assert isinstance(resultado, set)
     assert resultado == {"10.0.0.1"}
 
 
@@ -60,16 +66,45 @@ def test_obtener_ips_criticas_sin_eventos():
 
 
 def test_utilidades_con_eventos_reales():
-    eventos = leer_eventos_json("data/events.json")
+    ruta = (
+        Path(__file__).resolve().parents[1]
+        / "data"
+        / "events.json"
+    )
+
+    eventos = leer_eventos_json(ruta)
 
     ips_unicas = obtener_ips_unicas(eventos)
     ips_criticas = obtener_ips_criticas(eventos)
     resumen = crear_resumen_evento(eventos[0])
 
-    assert len(ips_unicas) == 3
-    assert len(ips_criticas) == 2
+    assert len(eventos) == 6
+
+    assert isinstance(ips_unicas, set)
+    assert ips_unicas == {
+        "8.8.8.8",
+        "192.168.1.10",
+        "203.0.113.25",
+    }
+
+    assert isinstance(ips_criticas, set)
+    assert ips_criticas == {
+        "192.168.1.10",
+        "203.0.113.25",
+    }
+
     assert isinstance(resumen, tuple)
-    assert len(resumen) == 3
+    assert resumen == ("8.8.8.8", "login", "INFO")
+
+    eventos_unicos = deduplicar_eventos(eventos)
+
+    assert eventos_unicos == eventos
+    assert eventos_unicos is not eventos
+
+    assert all(
+        unico is original
+        for unico, original in zip(eventos_unicos, eventos)
+    )
 
 def test_deduplicar_eventos_repetidos():
     eventos = [
@@ -80,9 +115,24 @@ def test_deduplicar_eventos_repetidos():
 
     resultado = deduplicar_eventos(eventos)
 
-    assert len(resultado) == 2
-    assert resultado[0] == eventos[0]
-    assert resultado[1] == eventos[2]
+    assert isinstance(resultado, list)
+
+    assert resultado == [
+        {
+            "ip": "192.168.1.10",
+            "event": "login",
+            "severity": "INFO",
+        },
+        {
+            "ip": "8.8.8.8",
+            "event": "error",
+            "severity": "CRITICAL",
+        },
+    ]
+
+    assert resultado[0] is eventos[0]
+    assert resultado[1] is eventos[2]
+    assert len(eventos) == 3
 
 
 def test_deduplicar_eventos_sin_duplicados():
@@ -93,7 +143,14 @@ def test_deduplicar_eventos_sin_duplicados():
 
     resultado = deduplicar_eventos(eventos)
 
-    assert resultado == eventos
+    assert resultado == [
+        {"ip": "192.168.1.10", "event": "login"},
+        {"ip": "192.168.1.10", "event": "logout"},
+    ]
+
+    assert resultado is not eventos
+    assert resultado[0] is eventos[0]
+    assert resultado[1] is eventos[1]
 
 
 def test_deduplicar_eventos_lista_vacia():
@@ -109,7 +166,10 @@ def test_deduplicar_eventos_lista_vacia():
     {},
 ])
 def test_ips_unicas_coleccion_invalida(registros):
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='proporcionarse como una lista'
+    ):
         obtener_ips_unicas(registros)
 
 
@@ -121,12 +181,15 @@ def test_ips_unicas_coleccion_invalida(registros):
     [],
 ])
 def test_ips_unicas_registro_invalido(registro):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Datos inválidos en el registro 1: se esperaba un diccionario'
+    ):
         obtener_ips_unicas([registro])
 
 
 def test_ips_unicas_campo_faltante():
-    with pytest.raises(ValueError, match="ip"):
+    with pytest.raises(ValueError, match="el registro 1: falta el campo obligatorio 'ip'"):
         obtener_ips_unicas([{}])
 
 
@@ -142,7 +205,15 @@ def test_ips_unicas_campo_faltante():
     "999.999.999.999",
 ])
 def test_ips_unicas_direccion_invalida(ip):
-    with pytest.raises(ValueError):
+    if not isinstance(ip, str) or not ip.strip():
+        mensaje = (
+            "el registro 1: el campo 'ip' debe ser "
+            "una cadena de texto no vacía"
+        )
+    else:
+        mensaje = "el registro 1: dirección IP inválida"
+
+    with pytest.raises(ValueError, match=mensaje):
         obtener_ips_unicas([{"ip": ip}])
 
 
@@ -165,7 +236,10 @@ def test_ips_unicas_ipv6():
     "evento",
 ])
 def test_resumen_evento_tipo_incorrecto(evento):
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='El evento debe ser un diccionario'
+    ):
         crear_resumen_evento(evento)
 
 
@@ -183,7 +257,7 @@ def test_resumen_evento_campo_faltante(campo):
 
     del evento[campo]
 
-    with pytest.raises(ValueError, match=campo):
+    with pytest.raises(ValueError, match=rf"el evento: falta el campo obligatorio '{campo}'"):
         crear_resumen_evento(evento)
 
 
@@ -210,7 +284,11 @@ def test_resumen_evento_campo_invalido(campo, valor):
 
     evento[campo] = valor
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=rf"el evento: el campo '{campo}' debe ser "
+              r"una cadena de texto no vacía"
+    ):
         crear_resumen_evento(evento)
 
 
@@ -221,7 +299,10 @@ def test_resumen_evento_ip_formato_invalido():
         "severity": "INFO"
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Datos inválidos en el evento: dirección IP inválida'
+    ):
         crear_resumen_evento(evento)
 
 
@@ -233,7 +314,10 @@ def test_resumen_evento_ip_formato_invalido():
     {},
 ])
 def test_ips_criticas_coleccion_invalida(eventos):
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='proporcionarse como una lista'
+    ):
         obtener_ips_criticas(eventos)
 
 
@@ -245,7 +329,10 @@ def test_ips_criticas_coleccion_invalida(eventos):
     "evento",
 ])
 def test_ips_criticas_evento_invalido(evento):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Datos inválidos en el evento 1: se esperaba un diccionario'
+    ):
         obtener_ips_criticas([evento])
 
 
@@ -261,7 +348,7 @@ def test_ips_criticas_campo_faltante(campo):
 
     del evento[campo]
 
-    with pytest.raises(ValueError, match=campo):
+    with pytest.raises(ValueError, match=rf"el evento 1: falta el campo obligatorio '{campo}'"):
         obtener_ips_criticas([evento])
 
 
@@ -286,7 +373,11 @@ def test_ips_criticas_campo_invalido(campo, valor):
 
     evento[campo] = valor
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=rf"el evento 1: el campo '{campo}' debe ser "
+              r"una cadena de texto no vacía"
+    ):
         obtener_ips_criticas([evento])
 
 
@@ -298,7 +389,10 @@ def test_ips_criticas_ip_formato_invalido():
         }
     ]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Datos inválidos en el evento 1: dirección IP inválida'
+    ):
         obtener_ips_criticas(eventos)
 
 
@@ -310,7 +404,10 @@ def test_ips_criticas_valida_eventos_no_criticos():
         }
     ]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Datos inválidos en el evento 1: dirección IP inválida'
+    ):
         obtener_ips_criticas(eventos)
 
 
@@ -339,7 +436,10 @@ def test_ips_criticas_sensible_mayusculas():
     {},
 ])
 def test_deduplicar_coleccion_invalida(eventos):
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='proporcionarse como una lista'
+    ):
         deduplicar_eventos(eventos)
 
 
@@ -351,7 +451,10 @@ def test_deduplicar_coleccion_invalida(eventos):
     "evento",
 ])
 def test_deduplicar_evento_invalido(evento):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Datos inválidos en el evento 1: se esperaba un diccionario'
+    ):
         deduplicar_eventos([evento])
 
 
@@ -376,7 +479,7 @@ def test_deduplicar_diccionarios_anidados():
     resultado = deduplicar_eventos(eventos)
 
     assert len(resultado) == 1
-    assert resultado[0] == eventos[0]
+    assert resultado[0] is eventos[0]
 
 
 def test_deduplicar_listas_anidadas():
@@ -413,7 +516,7 @@ def test_deduplicar_estructuras_complejas():
     resultado = deduplicar_eventos(eventos)
 
     assert len(resultado) == 1
-    assert resultado[0] == eventos[0]
+    assert resultado[0] is eventos[0]
 
 
 def test_deduplicar_conserva_primera_instancia():
@@ -430,7 +533,6 @@ def test_deduplicar_conserva_primera_instancia():
 
 
 def test_deduplicar_conserva_datos_originales():
-    from copy import deepcopy
 
     eventos = [
         {"datos": [1, 2, 3]},
@@ -456,8 +558,24 @@ def test_deduplicar_datos_no_compatibles_json(valor):
         {"datos": valor}
     ]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos(eventos)
+
+    if isinstance(valor, float):
+        assert isinstance(error.value.__cause__, ValueError)
+        assert (
+            "Los valores numéricos deben ser finitos"
+            in str(error.value.__cause__)
+        )
+    else:
+        assert isinstance(error.value.__cause__, TypeError)
+        assert (
+            "Tipo de dato incompatible con JSON"
+            in str(error.value.__cause__)
+        )
 
 @pytest.mark.parametrize("ip", [
     "8.8.8.8",
@@ -470,7 +588,6 @@ def test_deduplicar_datos_no_compatibles_json(valor):
     "2001:4860:4860::8888",
 ])
 def test_validar_ip_correcta(ip):
-    from src.utils.data_utils import validar_ip
 
     assert validar_ip(ip) is None
 
@@ -485,9 +602,11 @@ def test_validar_ip_correcta(ip):
     8.8,
 ])
 def test_validar_ip_tipo_incorrecto(ip):
-    from src.utils.data_utils import validar_ip
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='La dirección IP debe ser una cadena de texto'
+    ):
         validar_ip(ip)
 
 
@@ -503,10 +622,14 @@ def test_validar_ip_tipo_incorrecto(ip):
     "2001:::1",
 ])
 def test_validar_ip_formato_incorrecto(ip):
-    from src.utils.data_utils import validar_ip
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f"Dirección IP inválida: {ip!r}")
+    ) as error:
         validar_ip(ip)
+
+    assert isinstance(error.value.__cause__, ValueError)
 
 @pytest.mark.parametrize(
     "valor_1, valor_2",
@@ -580,10 +703,12 @@ def test_deduplicar_diccionario_circular():
     evento["datos"] = evento
 
     with pytest.raises(
-            ValueError,
-            match="el evento 1"
-    ):
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos([evento])
+
+    assert isinstance(error.value.__cause__, RecursionError)
 
 def test_deduplicar_lista_circular():
     datos = []
@@ -592,10 +717,12 @@ def test_deduplicar_lista_circular():
     evento = {"datos": datos}
 
     with pytest.raises(
-            ValueError,
-            match="el evento 1"
-    ):
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos([evento])
+
+    assert isinstance(error.value.__cause__, RecursionError)
 
 def test_deduplicar_referencia_circular_indirecta():
     evento = {}
@@ -603,10 +730,12 @@ def test_deduplicar_referencia_circular_indirecta():
     evento["datos"] = datos
 
     with pytest.raises(
-            ValueError,
-            match="el evento 1"
-    ):
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos([evento])
+
+    assert isinstance(error.value.__cause__, RecursionError)
 
 @pytest.mark.parametrize(
     "clave",
@@ -622,10 +751,12 @@ def test_deduplicar_claves_json_invalidas(clave):
     evento = {clave: "valor"}
 
     with pytest.raises(
-            ValueError,
-            match="el evento 1"
-    ):
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos([evento])
+
+    assert isinstance(error.value.__cause__, ValueError)
 
 def test_deduplicar_clave_anidada_invalida():
     evento = {
@@ -635,10 +766,12 @@ def test_deduplicar_clave_anidada_invalida():
     }
 
     with pytest.raises(
-            ValueError,
-            match="el evento 1"
-    ):
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos([evento])
+
+    assert isinstance(error.value.__cause__, ValueError)
 
 @pytest.mark.parametrize(
     "valor",
@@ -653,10 +786,12 @@ def test_deduplicar_tipos_no_admitidos(valor):
     evento = {"datos": valor}
 
     with pytest.raises(
-            ValueError,
-            match="el evento 1"
-    ):
+        ValueError,
+        match="el evento 1: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos([evento])
+
+    assert isinstance(error.value.__cause__, TypeError)
 
 def test_deduplicar_referencias_compartidas_validas():
     datos = [1, 2, 3]
@@ -697,12 +832,18 @@ def test_deduplicar_evento_invalido_segunda_posicion():
     evento_2 = {"cantidad": float("nan")}
 
     with pytest.raises(
-            ValueError,
-            match="el evento 2"
-    ):
+        ValueError,
+        match="el evento 2: el contenido no es compatible con JSON"
+    ) as error:
         deduplicar_eventos(
             [evento_1, evento_2]
         )
+
+    assert isinstance(error.value.__cause__, ValueError)
+    assert (
+        "Los valores numéricos deben ser finitos"
+        in str(error.value.__cause__)
+    )
 
 def test_deduplicar_valores_json_validos():
     evento_1 = {

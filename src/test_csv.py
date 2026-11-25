@@ -1,7 +1,9 @@
+from unittest.mock import patch
+
 import pytest
 
-from parsers.csv_parser import leer_logs_csv
-from services.metrics_service import calcular_porcentaje_http_500
+from src.parsers.csv_parser import leer_logs_csv
+from src.services.metrics_service import calcular_porcentaje_http_500
 
 
 def test_calcular_porcentaje_http_500():
@@ -35,8 +37,6 @@ def test_leer_logs_csv():
 
 
 def test_leer_csv_archivo_inexistente(tmp_path):
-    import pytest
-
     ruta = tmp_path / "archivo_inexistente.csv"
 
     with pytest.raises(FileNotFoundError, match="No se encontró"):
@@ -44,8 +44,6 @@ def test_leer_csv_archivo_inexistente(tmp_path):
 
 
 def test_leer_csv_status_invalido(tmp_path):
-    import pytest
-
     ruta = tmp_path / "logs_invalidos.csv"
 
     ruta.write_text(
@@ -59,8 +57,6 @@ def test_leer_csv_status_invalido(tmp_path):
 
 
 def test_leer_csv_response_time_invalido(tmp_path):
-    import pytest
-
     ruta = tmp_path / "logs_invalidos.csv"
 
     ruta.write_text(
@@ -73,9 +69,6 @@ def test_leer_csv_response_time_invalido(tmp_path):
         leer_logs_csv(ruta)
 
 def test_leer_csv_sin_permisos():
-    import pytest
-    from unittest.mock import patch
-
     ruta = "data/logs.csv"
 
     with patch("builtins.open", side_effect=PermissionError):
@@ -98,7 +91,7 @@ def test_leer_csv_encabezados_incompletos(tmp_path, encabezados):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="encabezados"):
+    with pytest.raises(ValueError, match="encabezados obligatorios:"):
         leer_logs_csv(ruta)
 
 def test_leer_csv_archivo_vacio(tmp_path):
@@ -106,7 +99,7 @@ def test_leer_csv_archivo_vacio(tmp_path):
 
     ruta.write_text("", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="encabezados"):
+    with pytest.raises(ValueError, match="encabezados obligatorios: ip, response_time, status"):
         leer_logs_csv(ruta)
 
 def test_leer_csv_sin_registros(tmp_path):
@@ -129,7 +122,7 @@ def test_leer_csv_status_fuera_de_rango(tmp_path, status):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="fila 2"):
+    with pytest.raises(ValueError, match="fila 2 del archivo CSV: El estado HTTP debe estar entre 100 y 599"):
         leer_logs_csv(ruta)
 
 def test_leer_csv_response_time_negativo(tmp_path):
@@ -141,7 +134,7 @@ def test_leer_csv_response_time_negativo(tmp_path):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="fila 2"):
+    with pytest.raises(ValueError, match="fila 2 del archivo CSV: El tiempo de respuesta no puede ser negativo"):
         leer_logs_csv(ruta)
 
 def test_leer_csv_response_time_cero(tmp_path):
@@ -167,7 +160,7 @@ def test_leer_csv_ip_vacia(tmp_path, ip):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="fila 2"):
+    with pytest.raises(ValueError, match="fila 2 del archivo CSV: La dirección IP no puede estar vacía"):
         leer_logs_csv(ruta)
 
 @pytest.mark.parametrize("ruta", [123, None, True])

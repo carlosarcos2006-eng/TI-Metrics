@@ -1,6 +1,9 @@
 import pytest
 
-from services.metrics_service import MetricsService
+from src.services.metrics_service import (
+    MetricsService,
+    calcular_porcentaje_http_500,
+)
 
 def test_metrics_service_calcula_porcentaje():
     """Comprueba el cálculo mediante el método de la clase."""
@@ -21,10 +24,21 @@ def test_metrics_service_sin_registros():
 
     assert servicio.calcular_porcentaje_http_500() == 0.0
 
-def test_metrics_service_valida_tipo():
+@pytest.mark.parametrize("registros", [
+    "registros_invalidos",
+    None,
+    123,
+    True,
+    {},
+    (),
+])
+def test_metrics_service_valida_tipo(registros):
     """Comprueba que el constructor rechaza tipos inválidos."""
-    with pytest.raises(TypeError):
-        MetricsService("registros_invalidos")
+    with pytest.raises(
+        TypeError,
+        match="Los registros deben proporcionarse como una lista"
+    ):
+        MetricsService(registros)
 
 def test_metrics_service_propiedad_solo_lectura():
     """Comprueba que no se puede reasignar la propiedad."""
@@ -81,7 +95,7 @@ def test_metrics_service_protege_diccionarios_devueltos():
     [],
 ])
 def test_metrics_service_registro_tipo_incorrecto(registro):
-    with pytest.raises(ValueError, match="registro 1"):
+    with pytest.raises(ValueError, match="registro 1: el registro debe ser un diccionario"):
         MetricsService([registro])
 
 def test_metrics_service_status_faltante():
@@ -89,7 +103,7 @@ def test_metrics_service_status_faltante():
         {"ip": "8.8.8.8"}
     ]
 
-    with pytest.raises(ValueError, match="registro 1"):
+    with pytest.raises(ValueError, match="registro 1: falta el campo obligatorio 'status'"):
         MetricsService(registros)
 
 @pytest.mark.parametrize("status", [
@@ -106,7 +120,7 @@ def test_metrics_service_status_tipo_incorrecto(status):
         {"status": status}
     ]
 
-    with pytest.raises(ValueError, match="registro 1"):
+    with pytest.raises(ValueError, match="registro 1: el estado HTTP debe ser un número entero"):
         MetricsService(registros)
 
 @pytest.mark.parametrize("status", [
@@ -121,7 +135,7 @@ def test_metrics_service_status_fuera_de_rango(status):
         {"status": status}
     ]
 
-    with pytest.raises(ValueError, match="registro 1"):
+    with pytest.raises(ValueError, match="registro 1: el estado HTTP debe estar entre 100 y 599"):
         MetricsService(registros)
 
 @pytest.mark.parametrize("status", [
@@ -181,13 +195,10 @@ def test_metrics_service_segundo_registro_invalido():
         {"status": 200},
         {"status": "500"}
     ]
-    with pytest.raises(ValueError, match="registro 2"):
+    with pytest.raises(ValueError, match="registro 2: el estado HTTP debe ser un número entero"):
         MetricsService(registros)
 
 def test_metrics_service_wrapper_datos_validos():
-    from services.metrics_service import (
-        calcular_porcentaje_http_500
-    )
 
     registros = [
         {"status": 500},
@@ -199,14 +210,86 @@ def test_metrics_service_wrapper_datos_validos():
     assert calcular_porcentaje_http_500(registros) == 50.0
 
 def test_metrics_service_wrapper_datos_invalidos():
-    from services.metrics_service import (
-        calcular_porcentaje_http_500
-    )
 
     registros = [
         {"status": 200},
         {"status": "500"}
     ]
 
-    with pytest.raises(ValueError, match="registro 2"):
+    with pytest.raises(ValueError, match="registro 2: el estado HTTP debe ser un número entero"):
         calcular_porcentaje_http_500(registros)
+
+
+@pytest.mark.parametrize("registros, esperado", [
+    (
+        [{"status": 500}, {"status": 200}, {"status": 404}],
+        33.33333333333333
+    ),
+    (
+        [{"status": 500}, {"status": 500}, {"status": 200}],
+        66.66666666666666
+    ),
+])
+def test_metrics_service_porcentaje_decimal(registros, esperado):
+    """Comprueba porcentajes con decimales periódicos."""
+    servicio = MetricsService(registros)
+
+    assert servicio.calcular_porcentaje_http_500() == pytest.approx(
+        esperado
+    )
+
+
+def test_metrics_service_protege_datos_anidados_originales():
+    """Comprueba la independencia de estructuras anidadas recibidas."""
+    registros = [
+        {
+            "status": 500,
+            "metadata": {
+                "etiquetas": ["critico"]
+            }
+        }
+    ]
+
+    servicio = MetricsService(registros)
+
+    registros[0]["metadata"]["etiquetas"].append("modificado")
+
+    assert servicio.registros == [
+        {
+            "status": 500,
+            "metadata": {
+                "etiquetas": ["critico"]
+            }
+        }
+    ]
+
+    assert servicio.calcular_porcentaje_http_500() == 100.0
+
+
+def test_metrics_service_protege_datos_anidados_devueltos():
+    """Comprueba la independencia de estructuras anidadas consultadas."""
+    servicio = MetricsService([
+        {
+            "status": 500,
+            "metadata": {
+                "etiquetas": ["critico"]
+            }
+        }
+    ])
+
+    registros_obtenidos = servicio.registros
+
+    registros_obtenidos[0]["metadata"]["etiquetas"].append(
+        "modificado"
+    )
+
+    assert servicio.registros == [
+        {
+            "status": 500,
+            "metadata": {
+                "etiquetas": ["critico"]
+            }
+        }
+    ]
+
+    assert servicio.calcular_porcentaje_http_500() == 100.0

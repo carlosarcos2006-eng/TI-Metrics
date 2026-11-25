@@ -1,7 +1,7 @@
 import json
 import pytest
 from unittest.mock import patch
-from parsers.json_parser import leer_eventos_json
+from src.parsers.json_parser import leer_eventos_json
 
 @pytest.mark.parametrize("contenido", [
     {},
@@ -36,7 +36,10 @@ def test_leer_json_evento_tipo_incorrecto(tmp_path, evento):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="evento 1"):
+    with pytest.raises(
+        ValueError,
+        match="evento 1: el evento debe ser un diccionario"
+    ):
         leer_eventos_json(ruta)
 
 @pytest.mark.parametrize("campo", [
@@ -60,7 +63,10 @@ def test_leer_json_campo_faltante(tmp_path, campo):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="evento 1"):
+    with pytest.raises(
+        ValueError,
+        match=f"evento 1: falta el campo obligatorio '{campo}'"
+    ):
         leer_eventos_json(ruta)
 
 @pytest.mark.parametrize("campo", [
@@ -95,7 +101,10 @@ def test_leer_json_campo_valor_invalido(
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="evento 1"):
+    with pytest.raises(
+        ValueError,
+        match=f"evento 1: el campo '{campo}' debe ser una cadena no vacía"
+    ):
         leer_eventos_json(ruta)
 
 @pytest.mark.parametrize("ruta", [
@@ -230,6 +239,6 @@ def test_leer_json_segundo_evento_invalido(tmp_path):
 
     with pytest.raises(
         ValueError,
-        match="evento 2"
+        match="evento 2: el campo 'severity' debe ser una cadena no vacía"
     ):
         leer_eventos_json(ruta)

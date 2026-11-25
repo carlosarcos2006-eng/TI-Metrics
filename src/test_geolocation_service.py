@@ -1,8 +1,13 @@
-
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
-from services.geolocation_service import GeolocationService
+from requests.exceptions import JSONDecodeError
+
+from src.services.geolocation_service import (
+    GeolocationService,
+    obtener_geolocalizacion,
+    enriquecer_ips_con_geolocalizacion,
+)
 
 
 def test_crear_servicio_con_valores_predeterminados():
@@ -31,31 +36,34 @@ def test_propiedades_de_solo_lectura():
     with pytest.raises(AttributeError):
         servicio.timeout = 20
 
+    assert servicio.url_base == "http://ip-api.com/json"
+    assert servicio.timeout == 5
+
 
 @pytest.mark.parametrize("url_base", ["", "   "])
 def test_url_base_vacia(url_base):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="La URL base no puede estar vacía"):
         GeolocationService(url_base=url_base)
 
 
 def test_url_base_tipo_incorrecto():
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="La URL base debe ser una cadena de texto"):
         GeolocationService(url_base=123)
 
 
 @pytest.mark.parametrize("timeout", [0, -1])
 def test_timeout_no_positivo(timeout):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="El timeout debe ser positivo y finito"):
         GeolocationService(timeout=timeout)
 
 
 @pytest.mark.parametrize("timeout", ["cinco", None, True])
 def test_timeout_tipo_incorrecto(timeout):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="El timeout debe ser un número"):
         GeolocationService(timeout=timeout)
 
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_metodo_obtener_geolocalizacion(mock_get):
     respuesta = Mock()
     respuesta.status_code = 200
@@ -68,7 +76,11 @@ def test_metodo_obtener_geolocalizacion(mock_get):
     servicio = GeolocationService(timeout=10)
     resultado = servicio.obtener_geolocalizacion("8.8.8.8")
 
-    assert resultado["country"] == "Ecuador"
+    assert resultado == {
+        "status": "success",
+        "country": "Ecuador",
+    }
+    respuesta.json.assert_called_once_with()
     mock_get.assert_called_once_with(
         "http://ip-api.com/json/8.8.8.8",
         timeout=10,
@@ -84,8 +96,14 @@ def test_metodo_enriquecer_ips(mock_obtener):
 
     resultado = servicio.enriquecer_ips_con_geolocalizacion(ips)
 
-    assert set(resultado.keys()) == set(ips)
-    assert mock_obtener.call_count == 2
+    assert resultado == {
+        "8.8.8.8": {"status": "success"},
+        "1.1.1.1": {"status": "success"},
+    }
+    assert mock_obtener.call_args_list == [
+        call("8.8.8.8"),
+        call("1.1.1.1"),
+    ]
 
 @pytest.mark.parametrize("timeout", [
     float("inf"),
@@ -93,7 +111,10 @@ def test_metodo_enriquecer_ips(mock_obtener):
     float("nan"),
 ])
 def test_timeout_no_finito(timeout):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="El timeout debe ser positivo y finito"
+    ):
         GeolocationService(timeout=timeout)
 
 @pytest.mark.parametrize("url_base", [
@@ -104,7 +125,10 @@ def test_timeout_no_finito(timeout):
     "https://",
 ])
 def test_url_base_estructura_invalida(url_base):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="La URL base debe utilizar HTTP o HTTPS"
+    ):
         GeolocationService(url_base=url_base)
 
 
@@ -120,11 +144,11 @@ def test_timeout_decimal_valido():
     [],
     {},
 ])
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_ip_tipo_incorrecto(mock_get, ip):
     servicio = GeolocationService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="La dirección IP debe ser una cadena de texto"):
         servicio.obtener_geolocalizacion(ip)
 
     mock_get.assert_not_called()
@@ -138,16 +162,16 @@ def test_ip_tipo_incorrecto(mock_get, ip):
     "192.168.1",
     "8.8.8.8/24",
 ])
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_ip_formato_invalido(mock_get, ip):
     servicio = GeolocationService()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Dirección IP inválida"):
         servicio.obtener_geolocalizacion(ip)
 
     mock_get.assert_not_called()
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_geolocalizacion_ipv6(mock_get):
     respuesta = Mock()
     respuesta.status_code = 200
@@ -178,7 +202,7 @@ def test_geolocalizacion_ipv6(mock_get):
     {},
     {"country": "Ecuador"},
 ])
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_respuesta_json_estructura_invalida(mock_get, datos):
     respuesta = Mock()
     respuesta.status_code = 200
@@ -190,9 +214,8 @@ def test_respuesta_json_estructura_invalida(mock_get, datos):
 
     assert servicio.obtener_geolocalizacion("8.8.8.8") is None
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_respuesta_json_malformada(mock_get):
-    from requests.exceptions import JSONDecodeError
 
     respuesta = Mock()
     respuesta.status_code = 200
@@ -215,11 +238,11 @@ def test_respuesta_json_malformada(mock_get):
     "8.8.8.8",
     {"ip": "8.8.8.8"},
 ])
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_coleccion_ips_tipo_incorrecto(mock_get, ips):
     servicio = GeolocationService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Las direcciones IP deben proporcionarse"):
         servicio.enriquecer_ips_con_geolocalizacion(ips)
 
     mock_get.assert_not_called()
@@ -230,7 +253,7 @@ def test_coleccion_ips_tipo_incorrecto(mock_get, ips):
     set(),
     frozenset(),
 ])
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_coleccion_ips_vacia(mock_get, ips):
     servicio = GeolocationService()
 
@@ -238,7 +261,7 @@ def test_coleccion_ips_vacia(mock_get, ips):
 
     mock_get.assert_not_called()
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_coleccion_con_segunda_ip_invalida(mock_get):
     servicio = GeolocationService()
 
@@ -247,7 +270,7 @@ def test_coleccion_con_segunda_ip_invalida(mock_get):
         "ip_invalida"
     ]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Dirección IP inválida"):
         servicio.enriquecer_ips_con_geolocalizacion(ips)
 
     mock_get.assert_not_called()
@@ -282,7 +305,11 @@ def test_enriquecer_ips_resultados_mixtos(mock_obtener):
         }
     }
 
-    assert mock_obtener.call_count == 3
+    assert mock_obtener.call_args_list == [
+        call("8.8.8.8"),
+        call("192.168.1.10"),
+        call("1.1.1.1"),
+    ]
 
 def test_normalizacion_url_base():
     servicio = GeolocationService(
@@ -307,10 +334,17 @@ def test_colecciones_ips_validas(mock_obtener, ips):
         ips
     )
 
-    assert set(resultado.keys()) == set(ips)
+    assert resultado == {
+        "8.8.8.8": {"status": "success"},
+        "1.1.1.1": {"status": "success"},
+    }
     assert mock_obtener.call_count == 2
+    mock_obtener.assert_has_calls([
+        call("8.8.8.8"),
+        call("1.1.1.1"),
+    ], any_order=isinstance(ips, frozenset))
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_coleccion_con_ip_tipo_incorrecto(mock_get):
     servicio = GeolocationService()
 
@@ -319,22 +353,58 @@ def test_coleccion_con_ip_tipo_incorrecto(mock_get):
         123
     ]
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match="La dirección IP debe ser una cadena de texto"
+    ):
         servicio.enriquecer_ips_con_geolocalizacion(ips)
 
     mock_get.assert_not_called()
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_wrappers_geolocalizacion_argumentos_invalidos(mock_get):
-    from services.geolocation_service import (
-        obtener_geolocalizacion,
-        enriquecer_ips_con_geolocalizacion,
-    )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Dirección IP inválida"):
         obtener_geolocalizacion("ip_invalida")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match="Las direcciones IP deben proporcionarse"
+    ):
         enriquecer_ips_con_geolocalizacion("8.8.8.8")
 
     mock_get.assert_not_called()
+
+
+@patch("src.services.geolocation_service.requests.get")
+def test_peticion_con_configuracion_personalizada(mock_get):
+    """Comprueba la URL normalizada y el timeout decimal."""
+    respuesta = Mock()
+    respuesta.status_code = 200
+    respuesta.json.return_value = {
+        "status": "success",
+        "country": "Australia",
+        "city": "Sydney",
+    }
+
+    mock_get.return_value = respuesta
+
+    servicio = GeolocationService(
+        url_base="  https://ejemplo.com/api///  ",
+        timeout=2.5,
+    )
+
+    resultado = servicio.obtener_geolocalizacion("1.1.1.1")
+
+    assert resultado == {
+        "status": "success",
+        "country": "Australia",
+        "city": "Sydney",
+    }
+
+    mock_get.assert_called_once_with(
+        "https://ejemplo.com/api/1.1.1.1",
+        timeout=2.5,
+    )
+
+    respuesta.json.assert_called_once_with()

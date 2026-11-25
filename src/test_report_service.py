@@ -1,9 +1,13 @@
-
 import json
+from unittest.mock import Mock
 
 import pytest
 
-from services.report_service import ReportService
+from src.services.report_service import (
+    ReportService,
+    construir_resumen,
+    guardar_reporte_json,
+)
 
 
 def test_constructor_valores_predeterminados():
@@ -24,16 +28,24 @@ def test_propiedad_indentacion_solo_lectura():
     with pytest.raises(AttributeError):
         servicio.indentacion = 8
 
+    assert servicio.indentacion == 4
+
 
 @pytest.mark.parametrize("indentacion", [-1, -4])
 def test_indentacion_negativa(indentacion):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='La\\ indentación\\ no\\ puede\\ ser\\ negativa'
+    ):
         ReportService(indentacion=indentacion)
 
 
 @pytest.mark.parametrize("indentacion", ["cuatro", None, 2.5, True])
 def test_indentacion_tipo_incorrecto(indentacion):
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='La\\ indentación\\ debe\\ ser\\ un\\ número\\ entero'
+    ):
         ReportService(indentacion=indentacion)
 
 
@@ -46,10 +58,12 @@ def test_metodo_construir_resumen():
         {"192.168.1.10": None}
     )
 
-    assert resumen["porcentaje_http_500"] == 30.0
-    assert resumen["ips_criticas"] == ["192.168.1.10"]
-    assert resumen["geolocalizaciones"] == {
-        "192.168.1.10": None
+    assert resumen == {
+        "porcentaje_http_500": 30.0,
+        "ips_criticas": ["192.168.1.10"],
+        "geolocalizaciones": {
+            "192.168.1.10": None
+        },
     }
 
 
@@ -113,7 +127,19 @@ def test_construir_resumen_conserva_orden_lista_ips():
         {}
     )
 
-    assert resumen["ips_criticas"] == ips_criticas
+    assert resumen["ips_criticas"] == [
+        "8.8.8.8",
+        "1.1.1.1",
+        "192.168.1.10",
+    ]
+
+    assert ips_criticas == [
+        "8.8.8.8",
+        "1.1.1.1",
+        "192.168.1.10",
+    ]
+
+    assert resumen["ips_criticas"] is not ips_criticas
 
 @pytest.mark.parametrize("porcentaje", [
     "30",
@@ -126,7 +152,10 @@ def test_construir_resumen_conserva_orden_lista_ips():
 def test_porcentaje_tipo_incorrecto(porcentaje):
     servicio = ReportService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='El\\ porcentaje\\ HTTP\\ 500\\ debe\\ ser\\ un\\ número'
+    ):
         servicio.construir_resumen(
             porcentaje,
             [],
@@ -144,7 +173,10 @@ def test_porcentaje_tipo_incorrecto(porcentaje):
 def test_porcentaje_valor_invalido(porcentaje):
     servicio = ReportService()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='El\\ porcentaje\\ HTTP\\ 500\\ debe\\ ser\\ finito\\ y\\ estar\\ entre\\ 0\\ y\\ 100'
+    ):
         servicio.construir_resumen(
             porcentaje,
             [],
@@ -177,7 +209,10 @@ def test_porcentaje_valido(porcentaje):
 def test_ips_criticas_coleccion_invalida(ips):
     servicio = ReportService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='Las\\ IP\\ críticas\\ deben\\ proporcionarse'
+    ):
         servicio.construir_resumen(
             30.0,
             ips,
@@ -194,7 +229,10 @@ def test_ips_criticas_coleccion_invalida(ips):
 def test_ip_critica_tipo_incorrecto(ip):
     servicio = ReportService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='La\\ dirección\\ IP\\ debe\\ ser\\ una\\ cadena\\ de\\ texto'
+    ):
         servicio.construir_resumen(
             30.0,
             ["8.8.8.8", ip],
@@ -211,7 +249,10 @@ def test_ip_critica_tipo_incorrecto(ip):
 def test_ip_critica_formato_invalido(ip):
     servicio = ReportService()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Dirección\\ IP\\ inválida'
+    ):
         servicio.construir_resumen(
             30.0,
             [ip],
@@ -251,7 +292,10 @@ def test_geolocalizaciones_tipo_incorrecto(
 ):
     servicio = ReportService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='Las\\ geolocalizaciones\\ deben\\ proporcionarse\\ como\\ un\\ diccionario'
+    ):
         servicio.construir_resumen(
             30.0,
             [],
@@ -266,7 +310,10 @@ def test_geolocalizaciones_tipo_incorrecto(
 def test_geolocalizacion_clave_tipo_incorrecto(clave):
     servicio = ReportService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='La\\ dirección\\ IP\\ debe\\ ser\\ una\\ cadena\\ de\\ texto'
+    ):
         servicio.construir_resumen(
             30.0,
             [],
@@ -281,7 +328,10 @@ def test_geolocalizacion_clave_tipo_incorrecto(clave):
 def test_geolocalizacion_clave_formato_invalido(clave):
     servicio = ReportService()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Dirección\\ IP\\ inválida'
+    ):
         servicio.construir_resumen(
             30.0,
             [],
@@ -297,7 +347,10 @@ def test_geolocalizacion_clave_formato_invalido(clave):
 def test_geolocalizacion_valor_incorrecto(valor):
     servicio = ReportService()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='La\\ geolocalización\\ de\\ 8\\.8\\.8\\.8\\ debe\\ ser\\ un\\ diccionario\\ o\\ None'
+    ):
         servicio.construir_resumen(
             30.0,
             ["8.8.8.8"],
@@ -334,7 +387,10 @@ def test_guardar_resumen_tipo_incorrecto(
     servicio = ReportService()
     ruta = tmp_path / "reporte.json"
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='El\\ resumen\\ debe\\ ser\\ un\\ diccionario'
+    ):
         servicio.guardar_reporte_json(
             resumen,
             ruta
@@ -346,7 +402,6 @@ def test_guardar_resumen_tipo_incorrecto(
 
 @pytest.mark.parametrize("ruta", [None, 123, True, [], {}])
 def test_ruta_reporte_tipo_incorrecto(ruta, monkeypatch):
-    from unittest.mock import Mock
 
     servicio = ReportService()
 
@@ -356,10 +411,14 @@ def test_ruta_reporte_tipo_incorrecto(ruta, monkeypatch):
         )
     )
 
-    monkeypatch.setattr("builtins.open", apertura)
+    with monkeypatch.context() as m:
+        m.setattr("builtins.open", apertura)
 
-    with pytest.raises(TypeError):
-        servicio.guardar_reporte_json({}, ruta)
+        with pytest.raises(
+            TypeError,
+            match='La\\ ruta\\ del\\ reporte\\ debe\\ ser\\ una\\ cadena\\ de\\ texto'
+        ):
+            servicio.guardar_reporte_json({}, ruta)
 
     apertura.assert_not_called()
 
@@ -367,7 +426,6 @@ def test_ruta_reporte_tipo_incorrecto(ruta, monkeypatch):
 
 @pytest.mark.parametrize("ruta", ["", "   "])
 def test_ruta_reporte_vacia(ruta, monkeypatch):
-    from unittest.mock import Mock
 
     servicio = ReportService()
 
@@ -377,10 +435,14 @@ def test_ruta_reporte_vacia(ruta, monkeypatch):
         )
     )
 
-    monkeypatch.setattr("builtins.open", apertura)
+    with monkeypatch.context() as m:
+        m.setattr("builtins.open", apertura)
 
-    with pytest.raises(ValueError):
-        servicio.guardar_reporte_json({}, ruta)
+        with pytest.raises(
+            ValueError,
+            match='La\\ ruta\\ del\\ reporte\\ no\\ puede\\ estar\\ vacía'
+        ):
+            servicio.guardar_reporte_json({}, ruta)
 
     apertura.assert_not_called()
 
@@ -396,7 +458,7 @@ def test_guardar_reporte_directorio_inexistente(tmp_path):
 
     with pytest.raises(
         FileNotFoundError,
-        match="reporte.json"
+        match="No se encontró la ruta del reporte"
     ):
         servicio.guardar_reporte_json(
             {},
@@ -412,22 +474,25 @@ def test_guardar_reporte_sin_permisos(
     servicio = ReportService()
     ruta = tmp_path / "reporte.json"
 
-    def simular_error_permisos(*args, **kwargs):
-        raise PermissionError()
+    apertura = Mock(side_effect=PermissionError())
 
-    monkeypatch.setattr(
-        "builtins.open",
-        simular_error_permisos
+    with monkeypatch.context() as m:
+        m.setattr("builtins.open", apertura)
+
+        with pytest.raises(
+            PermissionError,
+            match="No tienes permisos para guardar el reporte"
+        ) as error:
+            servicio.guardar_reporte_json({}, ruta)
+
+    apertura.assert_called_once_with(
+        str(ruta),
+        mode="w",
+        encoding="utf-8",
     )
 
-    with pytest.raises(
-        PermissionError,
-        match="permisos"
-    ):
-        servicio.guardar_reporte_json(
-            {},
-            ruta
-        )
+    assert isinstance(error.value.__cause__, PermissionError)
+    assert not ruta.exists()
 
 def test_guardar_reporte_no_serializable(tmp_path):
     servicio = ReportService()
@@ -437,7 +502,10 @@ def test_guardar_reporte_no_serializable(tmp_path):
         "datos": {1, 2, 3}
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='El\\ resumen\\ contiene\\ datos\\ no\\ serializables\\ a\\ JSON'
+    ):
         servicio.guardar_reporte_json(
             resumen,
             ruta
@@ -461,7 +529,10 @@ def test_guardar_reporte_valores_no_finitos(
         "valor": valor
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='El\\ resumen\\ contiene\\ valores\\ inválidos\\ para\\ JSON'
+    ):
         servicio.guardar_reporte_json(
             resumen,
             ruta
@@ -486,7 +557,10 @@ def test_conservar_reporte_ante_error_serializacion(
         "datos": {1, 2, 3}
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='El\\ resumen\\ contiene\\ datos\\ no\\ serializables\\ a\\ JSON'
+    ):
         servicio.guardar_reporte_json(
             resumen_invalido,
             ruta
@@ -496,10 +570,30 @@ def test_conservar_reporte_ante_error_serializacion(
         encoding="utf-8"
     ) == contenido_original
 
-def test_indentacion_cero():
+def test_indentacion_cero(tmp_path):
     servicio = ReportService(indentacion=0)
 
     assert servicio.indentacion == 0
+
+    ruta = tmp_path / "reporte_indentacion_cero.json"
+
+    resumen = {
+        "mensaje": "Geolocalización de Quito",
+        "porcentaje_http_500": 30.0,
+    }
+
+    servicio.guardar_reporte_json(resumen, ruta)
+
+    contenido_texto = ruta.read_text(encoding="utf-8")
+
+    assert json.loads(contenido_texto) == resumen
+
+    assert contenido_texto == (
+        '{\n'
+        '"mensaje": "Geolocalización de Quito",\n'
+        '"porcentaje_http_500": 30.0\n'
+        '}'
+    )
 
 @pytest.mark.parametrize("ips, resultado_esperado", [
     (
@@ -557,7 +651,10 @@ def test_conservar_reporte_ante_valor_no_finito(tmp_path):
         encoding="utf-8"
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='El\\ resumen\\ contiene\\ valores\\ inválidos\\ para\\ JSON'
+    ):
         servicio.guardar_reporte_json(
             {"valor": float("nan")},
             ruta
@@ -569,9 +666,11 @@ def test_conservar_reporte_ante_valor_no_finito(tmp_path):
 
 
 def test_wrapper_construir_resumen_invalido():
-    from services.report_service import construir_resumen
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='El\\ porcentaje\\ HTTP\\ 500\\ debe\\ ser\\ finito\\ y\\ estar\\ entre\\ 0\\ y\\ 100'
+    ):
         construir_resumen(
             101,
             [],
@@ -580,11 +679,13 @@ def test_wrapper_construir_resumen_invalido():
 
 
 def test_wrapper_guardar_reporte_invalido(tmp_path):
-    from services.report_service import guardar_reporte_json
 
     ruta = tmp_path / "reporte.json"
 
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError,
+        match='El\\ resumen\\ contiene\\ datos\\ no\\ serializables\\ a\\ JSON'
+    ):
         guardar_reporte_json(
             {"datos": {1, 2, 3}},
             ruta
