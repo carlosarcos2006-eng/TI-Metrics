@@ -68,15 +68,16 @@ con la cobertura exclusiva de producción medida en el Hito 2.
 
 ## 4. Hito 2: Refactorización a Arquitectura Orientada a Objetos y UML
 
-**Estado:** implementación, pruebas, auditoría técnica e integración
-en la rama principal completadas.
+**Estado:** implementación, pruebas, auditoría técnica, integración
+en la rama principal y validación operativa completadas.
 
 La arquitectura del Hito 2 fue incorporada en main mediante el
 [Pull Request #1](https://github.com/carlosarcos2006-eng/TI-Metrics/pull/1),
 conservando el historial de desarrollo.
 
-La consolidación documental y la preparación final de la entrega
-se encuentran en curso.
+La consolidación documental y la validación técnica del Hito 2
+se encuentran completadas. La entrega académica y su evaluación
+corresponden a una etapa independiente.
 
 **Badge asociado al hito:** OOP Architect.
 
@@ -410,6 +411,71 @@ del servicio externo y pueden contener valores `null`.
 
 La ejecución puede sobrescribir el reporte existente.
 
+### Validación operativa definitiva
+
+**Fecha planificada:** 22 de noviembre de 2026.
+
+**Fecha de ejecución técnica:** 24 de noviembre de 2026.
+
+Se ejecutó la aplicación desde la rama principal main,
+utilizando los archivos originales del proyecto y sin
+simular las peticiones HTTP de esta ejecución.
+
+| Indicador | Resultado |
+|---|---:|
+| Código de salida | 0 |
+| Registros CSV procesados | 10 |
+| Direcciones IP únicas en CSV | 4 |
+| Registros HTTP 200 | 5 |
+| Registros HTTP 401 | 1 |
+| Registros HTTP 404 | 1 |
+| Registros HTTP 500 | 3 |
+| Porcentaje HTTP 500 | 30.0 % |
+| Eventos JSON procesados | 6 |
+| Eventos INFO | 2 |
+| Eventos WARNING | 2 |
+| Eventos CRITICAL | 2 |
+| Eventos duplicados encontrados | 0 |
+| Direcciones IP únicas en JSON | 3 |
+| Direcciones IP críticas | 2 |
+| Resultados de geolocalización | 2 |
+| Resultados de geolocalización no nulos | 1 |
+| Resultados de geolocalización nulos | 1 |
+
+Los resultados CSV y JSON fueron contrastados mediante
+comprobaciones independientes y coincidieron con los
+resultados de los componentes de producción.
+
+La ausencia de duplicados en los datos originales no demuestra
+por sí sola la eliminación de eventos duplicados. Este
+comportamiento se verifica mediante pruebas automatizadas.
+
+### Auditoría del reporte generado
+
+El reporte original y el generado tuvieron un tamaño de
+677 bytes y conservaron los mismos resultados funcionales
+en los campos evaluados.
+
+Se identificaron dos observaciones técnicas:
+
+- **GEO-OBS-01:** la respuesta no nula correspondiente a
+  203.0.113.25 no constituye evidencia de una ubicación
+  geográfica real, debido a que pertenece a TEST-NET-3.
+  La dirección privada 192.168.1.10 produjo un resultado nulo.
+- **REP-OBS-01:** el orden de las direcciones IP críticas
+  cambió debido al ordenamiento determinista de los conjuntos
+  en ReportService. Los reportes no fueron idénticos a nivel
+  binario ni como estructuras JSON completas.
+
+Se conservó temporalmente una copia del reporte generado
+fuera del repositorio y se restauró el reporte original.
+
+La restauración fue verificada mediante comparación binaria,
+comparación JSON y huellas SHA-256 coincidentes.
+
+El respaldo temporal no constituye almacenamiento permanente.
+La auditoría no garantiza la disponibilidad futura de la API.
+
 ## 11. Pruebas automatizadas y cobertura
 
 ### Ejecutar la suite completa
@@ -464,6 +530,37 @@ validación realizada antes de la integración definitiva.
 No se detectaron regresiones mediante la suite automatizada.
 Esta comprobación no sustituye la validación operativa final
 ni garantiza la ausencia absoluta de defectos.
+
+### Validación definitiva del Hito 2
+
+**Fecha planificada:** 22 de noviembre de 2026.
+
+**Fecha de ejecución técnica:** 24 de noviembre de 2026.
+
+| Indicador | Resultado |
+|---|---:|
+| Rama evaluada | main |
+| Commit de referencia | 1352107 |
+| Archivos de pruebas | 11 |
+| Pruebas aprobadas | 478 |
+| Pruebas fallidas | 0 |
+| Sentencias de producción | 358 |
+| Sentencias cubiertas | 357 |
+| Sentencias no cubiertas | 1 |
+| Cobertura calculada | 99.72 % |
+| Cobertura mostrada por la herramienta | 99 % |
+| Tiempo de la suite con cobertura | 0.57 s |
+
+Los resultados definitivos coinciden con los obtenidos
+durante las validaciones anteriores.
+
+No se detectaron regresiones mediante la suite automatizada.
+Los tiempos observados no constituyen una evaluación formal
+del rendimiento del sistema.
+
+La ejecución operativa y las pruebas automatizadas aportan
+evidencia complementaria, sin garantizar la ausencia
+absoluta de defectos.
 
 ### Distribución de pruebas
 
@@ -574,11 +671,31 @@ Cada registro contiene:
 Las propuestas generadas se someten a revisión, adaptación
 y validación técnica antes de incorporarse al proyecto.
 
+Al finalizar el Hito 2, PROMPTS.md contiene 54 registros
+con numeración consecutiva y sin identificadores duplicados.
+
+| Indicador | Resultado |
+|---|---:|
+| Registros del Hito 1 | 35 |
+| Registros adicionales del Hito 2 | 19 |
+| Total de registros | 54 |
+
+El registro final, correspondiente al Prompt #54, documenta
+la validación operativa, las pruebas definitivas, la auditoría
+del reporte y las limitaciones identificadas.
+
+Las fechas planificadas se distinguen de las fechas de
+ejecución técnica cuando ambas no coinciden.
+
 ## 15. Limitaciones técnicas
 
 - La geolocalización depende de la disponibilidad de una API externa.
 - La configuración predeterminada de la API utiliza HTTP sin cifrado.
 - Las respuestas simuladas no constituyen geolocalizaciones reales.
+- Una respuesta exitosa para una IP reservada para documentación
+  no demuestra una ubicación geográfica real.
+- El orden de las direcciones IP críticas puede diferir entre
+  versiones sin modificar los resultados funcionales evaluados.
 - Las rutas relativas requieren ejecutar desde la raíz del proyecto
   o desde un entorno que reproduzca la estructura esperada.
 - El reporte JSON no se guarda mediante escritura atómica.
@@ -598,15 +715,31 @@ técnica y orientar futuras mejoras.
 | Hito 2: Implementación de arquitectura POO | Completado |
 | Hito 2: Validaciones y pruebas automatizadas | Completado |
 | Hito 2: Diagramas UML y auditoría de requerimientos | Completado |
-| Hito 2: Consolidación documental | En curso |
+| Hito 2: Consolidación documental | Completado |
 | Hito 2: Integración en la rama principal | Completado |
 | Hito 2: Regresión posterior a la integración | Completado |
-| Hito 2: Validación operativa y entrega final | Pendiente |
+| Hito 2: Validación operativa definitiva | Completado |
+| Hito 2: Entrega y evaluación académica | Pendiente |
 | Hito 3: Consolidación de calidad, auditoría y defensa oral | Pendiente |
 
 La integración del Hito 2 en la rama principal se encuentra
 completada mediante el Pull Request #1.
 
-El proyecto continuará con el cierre documental, la validación
-operativa final de los entregables y la preparación de la
-defensa académica.
+El Hito 2 cuenta con una arquitectura orientada a objetos,
+documentación UML, una matriz de cumplimiento, 478 pruebas
+automatizadas aprobadas y una cobertura de producción del
+99.72 %.
+
+La validación operativa confirmó los resultados esperados
+para los archivos originales y documentó las limitaciones
+identificadas durante la ejecución.
+
+El repositorio conserva los 29 archivos versionados previstos
+y los 54 registros de asistencia de inteligencia artificial.
+
+La preparación de la defensa académica se realizará como
+una actividad independiente del desarrollo técnico.
+
+La evaluación oficial del Hito 2 corresponde al docente.
+Las siguientes actividades de desarrollo estarán orientadas
+a los requerimientos del Hito 3.
