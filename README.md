@@ -420,7 +420,7 @@ excluyendo los archivos de pruebas del cálculo.
 
 ### Última validación técnica documentada
 
-**Fecha:** 24 de noviembre de 2026.
+**Fecha:** 13 de noviembre de 2026.
 
 | Indicador | Resultado |
 |---|---:|
