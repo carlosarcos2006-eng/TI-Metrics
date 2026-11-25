@@ -1,64 +1,364 @@
-
 # TI-Metrics
 
 Engine de Analítica de Logs y Monitoreo de Infraestructura.
 
-## Descripción
+Proyecto integrador de Programación II y Aplicaciones de Software.
 
-TI-Metrics es una aplicación de consola desarrollada en Python 3
-que procesa registros de infraestructura TI en formatos CSV y JSON,
-calcula métricas HTTP, identifica direcciones IP críticas y consulta
-una API REST pública para obtener información geográfica.
+## 1. Descripción general
 
-## Hito 1: Ingesta de Datos, Persistencia y API REST
+TI-Metrics es una aplicación de consola desarrollada en Python
+para procesar registros de infraestructura de tecnologías de la
+información en formatos CSV y JSON.
 
-Estado: Desarrollo funcional completado.
+El sistema calcula métricas HTTP, identifica direcciones IP
+asociadas a eventos críticos, consulta una API REST pública
+de geolocalización y genera un reporte estructurado en JSON.
+
+La arquitectura actual utiliza Programación Orientada a Objetos
+(POO), funciones auxiliares y mecanismos de validación para
+favorecer la modularidad, el mantenimiento y la calidad del software.
+
+## 2. Objetivos del proyecto
+
+### Objetivo general
+
+Desarrollar una herramienta de análisis de registros de
+infraestructura TI que permita transformar datos de entrada
+en información estructurada mediante una arquitectura modular,
+orientada a objetos y respaldada por pruebas automatizadas.
+
+### Objetivos específicos
+
+- Procesar registros CSV y eventos JSON.
+- Validar la estructura y el contenido de los datos.
+- Identificar y eliminar eventos duplicados.
+- Calcular el porcentaje de errores HTTP 500.
+- Identificar direcciones IP asociadas a eventos críticos.
+- Enriquecer información mediante una API REST.
+- Generar reportes persistentes en formato JSON.
+- Aplicar abstracción, herencia, polimorfismo y encapsulamiento.
+- Verificar el comportamiento mediante pruebas automatizadas.
+- Documentar la arquitectura, los resultados y las decisiones técnicas.
+
+## 3. Hito 1: Ingesta de Datos, Persistencia y API REST
+
+**Estado:** desarrollo funcional completado.
 
 ### Funcionalidades implementadas
 
 - Lectura de registros desde archivos CSV y JSON.
-- Procesamiento de datos mediante listas, diccionarios, tuplas y conjuntos.
+- Procesamiento mediante listas, diccionarios, tuplas y conjuntos.
 - Deduplicación de eventos mediante conjuntos (`set`).
 - Cálculo del porcentaje de errores HTTP 500.
 - Identificación de direcciones IP críticas.
 - Consumo de una API REST mediante `requests`.
-- Manejo de excepciones en lectura de archivos y peticiones HTTP.
+- Manejo de excepciones en archivos y peticiones HTTP.
 - Generación de un reporte resumido en formato JSON.
 
-## Tecnologías
+### Referencia histórica
 
-- Python 3
-- Requests
-- Pytest
-- pytest-cov
-- Git y GitHub
+| Indicador | Resultado |
+|---|---:|
+| Pruebas aprobadas | 31 |
+| Pruebas fallidas | 0 |
+| Cobertura global reportada | 99 % |
 
-## Estructura del proyecto
+La cobertura histórica del Hito 1 no es directamente comparable
+con la cobertura exclusiva de producción medida en el Hito 2.
 
-- `data/`: archivos CSV, JSON y reportes generados.
-- `src/main.py`: punto de entrada de la aplicación.
-- `src/parsers/`: lectura de archivos CSV y JSON.
-- `src/services/`: métricas, geolocalización y reportes.
-- `src/utils/`: funciones auxiliares y deduplicación.
-- `src/test_*.py`: pruebas automatizadas.
-- `PROMPTS.md`: registro de asistencia de inteligencia artificial.
-- `requirements.txt`: dependencias del proyecto.
+## 4. Hito 2: Refactorización a Arquitectura Orientada a Objetos y UML
 
-## Instalación
+**Estado:** implementación, pruebas y auditoría técnica completadas.
+Consolidación documental y preparación de la entrega en curso.
 
-Desde la carpeta raíz del proyecto:
+**Badge asociado al hito:** OOP Architect.
+
+### Mejoras implementadas
+
+- Refactorización de los componentes principales mediante clases.
+- Implementación de una clase abstracta para los analizadores.
+- Aplicación de herencia y polimorfismo.
+- Encapsulamiento mediante atributos no públicos y propiedades.
+- Validaciones de tipos, estructuras, rangos y direcciones IP.
+- Fortalecimiento del manejo de excepciones.
+- Conservación de funciones auxiliares y funciones de compatibilidad.
+- Ampliación de las pruebas unitarias y de integración.
+- Elaboración y actualización de diagramas UML mediante Mermaid.
+- Auditoría de requerimientos y compatibilidad funcional.
+
+### Evaluación de requerimientos
+
+| Requerimiento oficial | Evaluación técnica interna |
+|---|---|
+| Refactorización completa hacia POO | Cumple con observaciones |
+| Jerarquía de clases, herencia y polimorfismo | Cumple |
+| Encapsulamiento mediante propiedades | Cumple |
+| Diagrama de clases UML dentro de docs/ | Cumple |
+
+La auditoría interna comprende 20 criterios técnicos:
+19 cumplen sin observaciones y 1 cumple con observaciones.
+
+La observación corresponde a diferencias intencionales de
+compatibilidad entre ambos hitos.
+
+Esta evaluación técnica no sustituye la calificación oficial
+del docente.
+
+## 5. Arquitectura orientada a objetos
+
+La arquitectura contiene seis clases principales:
+una clase abstracta y cinco clases concretas.
+
+### Clases implementadas
+
+| Clase | Tipo | Responsabilidad |
+|---|---|---|
+| BaseLogParser | Abstracta | Define el contrato común de lectura y valida la ruta. |
+| CSVLogParser | Concreta | Lee y valida registros CSV. |
+| JSONLogParser | Concreta | Lee y valida eventos JSON. |
+| MetricsService | Concreta | Encapsula registros y calcula métricas HTTP. |
+| GeolocationService | Concreta | Consulta y procesa información de geolocalización. |
+| ReportService | Concreta | Construye y persiste reportes JSON. |
+
+### Principios de POO aplicados
+
+**Abstracción:** `BaseLogParser` utiliza `ABC` y
+`@abstractmethod` para definir el contrato `leer()`.
+
+**Herencia:** `CSVLogParser` y `JSONLogParser` heredan
+de `BaseLogParser`.
+
+**Polimorfismo:** ambos analizadores implementan `leer()`
+de acuerdo con su formato de entrada.
+
+**Encapsulamiento:** las clases utilizan atributos no públicos
+y propiedades de solo lectura mediante `@property`.
+
+**Coordinación de objetos y dependencias:** `main()` crea
+instancias de los analizadores y servicios para coordinar
+el procesamiento. Esta interacción representa dependencias
+de uso, no una relación estructural de composición UML.
+
+### Encapsulamiento
+
+| Clase | Atributo interno | Propiedad de solo lectura |
+|---|---|---|
+| BaseLogParser | `_ruta_archivo` | `ruta_archivo` |
+| MetricsService | `_registros` | `registros` |
+| GeolocationService | `_url_base` | `url_base` |
+| GeolocationService | `_timeout` | `timeout` |
+| ReportService | `_indentacion` | `indentacion` |
+
+El prefijo `_` representa una convención de acceso no público
+en Python, no una restricción absoluta de acceso.
+
+`MetricsService` utiliza copias defensivas mediante `deepcopy()`
+para proteger sus registros frente a modificaciones externas.
+
+### Validaciones y manejo de excepciones
+
+| Componente | Validaciones principales |
+|---|---|
+| BaseLogParser | Tipo y contenido de la ruta. |
+| CSVLogParser | Encabezados, campos, códigos HTTP y tiempos de respuesta. |
+| JSONLogParser | Estructura JSON, registros y campos obligatorios. |
+| MetricsService | Tipo de colección, registros y códigos HTTP. |
+| GeolocationService | URL, timeout, direcciones IP y respuestas de la API. |
+| ReportService | Porcentajes, direcciones IP, estructura y serialización JSON. |
+| data_utils | Estructuras, campos, direcciones IP y deduplicación. |
+| main | Manejo de errores esperados y códigos de salida. |
+
+Los analizadores verifican que los campos IP no estén vacíos.
+La validación del formato de las direcciones IP se realiza
+en los componentes que requieren dicha comprobación.
+
+Las funciones auxiliares sin estado se mantienen como funciones,
+evitando introducir clases innecesarias.
+
+## 6. Flujo de procesamiento
+
+El punto de entrada de la aplicación es `src/main.py`.
+
+1. Inicializar los analizadores CSV y JSON.
+2. Leer los registros de `data/logs.csv`.
+3. Leer los eventos de `data/events.json`.
+4. Eliminar eventos duplicados.
+5. Calcular el porcentaje de errores HTTP 500.
+6. Identificar las direcciones IP críticas.
+7. Consultar la información de geolocalización.
+8. Construir el resumen de resultados.
+9. Guardar el reporte en `data/report.json`.
+10. Mostrar los resultados en la consola.
+
+El programa devuelve el código de salida `0` cuando finaliza
+correctamente y `1` ante los errores esperados que captura.
+
+Los errores inesperados que no pertenecen a las excepciones
+gestionadas pueden propagarse.
+
+## 7. Tecnologías y requisitos del entorno
+
+### Entorno verificado
+
+| Tecnología | Versión utilizada |
+|---|---|
+| Python | 3.14.0 |
+| requests | 2.34.2 |
+| pytest | 9.1.1 |
+| pytest-cov | 7.1.0 |
+| Sistema operativo | macOS |
+| Entorno virtual | venv |
+
+También se utilizan Git, GitHub, Mermaid y PyCharm como
+herramientas de desarrollo, control de versiones y documentación.
+
+### Dependencias externas
+
+- `requests`: consumo de servicios HTTP.
+- `pytest`: ejecución de pruebas automatizadas.
+- `pytest-cov`: medición de cobertura.
+
+Las dependencias se encuentran declaradas en `requirements.txt`.
+
+El archivo no fija versiones específicas. Las versiones indicadas
+corresponden al entorno verificado, no a requisitos mínimos
+ni a una garantía de compatibilidad con otras versiones.
+
+La comprobación `python -m pip check` no detectó dependencias
+incompatibles o faltantes en el entorno utilizado.
+
+## 8. Estructura del repositorio
+
+El repositorio contiene 29 archivos versionados, incluyendo
+11 archivos de pruebas automatizadas.
+
+```text
+TI-Metrics/
+├── .gitignore
+├── PROMPTS.md
+├── README.md
+├── requirements.txt
+├── data/
+│   ├── events.json
+│   ├── logs.csv
+│   └── report.json
+├── docs/
+│   ├── diagrama_clases.md
+│   └── matriz_cumplimiento_hito2.md
+└── src/
+    ├── main.py
+    ├── models/
+    │   ├── __init__.py
+    │   └── base_log_parser.py
+    ├── parsers/
+    │   ├── csv_parser.py
+    │   └── json_parser.py
+    ├── services/
+    │   ├── geolocation_service.py
+    │   ├── metrics_service.py
+    │   └── report_service.py
+    ├── utils/
+    │   └── data_utils.py
+    ├── test_csv.py
+    ├── test_geolocation.py
+    ├── test_geolocation_service.py
+    ├── test_integracion.py
+    ├── test_json.py
+    ├── test_main.py
+    ├── test_metrics_service.py
+    ├── test_poo_parsers.py
+    ├── test_report.py
+    ├── test_report_service.py
+    └── test_utils.py
+```
+
+| Directorio | Responsabilidad |
+|---|---|
+| data/ | Archivos de entrada y reporte generado. |
+| docs/ | Documentación técnica especializada. |
+| src/models/ | Clases base y abstracciones. |
+| src/parsers/ | Lectura y validación de archivos. |
+| src/services/ | Métricas, geolocalización y reportes. |
+| src/utils/ | Funciones auxiliares y validaciones compartidas. |
+| src/test_*.py | Pruebas unitarias y de integración. |
+
+## 9. Instalación
+
+### 9.1. Clonar el repositorio
+
+```bash
+git clone https://github.com/carlosarcos2006-eng/TI-Metrics.git
+cd TI-Metrics
+```
+
+Mientras el Hito 2 se encuentre en su rama de desarrollo,
+seleccionar dicha rama:
+
+```bash
+git switch feat/hito2-poo
+```
+
+Una vez integrado el Hito 2 en la rama principal, utilizar
+la versión correspondiente de `main`.
+
+### 9.2. Crear un entorno virtual
+
+En macOS o Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+En Windows PowerShell:
+
+```powershell
+py -m venv .venv
+.venv/Scripts/Activate.ps1
+```
+
+Las instrucciones para Linux y Windows son referencias de
+configuración. La validación documentada se realizó en macOS.
+
+### 9.3. Instalar las dependencias
+
+Desde la raíz del proyecto y con el entorno virtual activo:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-## Ejecución
+### 9.4. Comprobar las dependencias
 
 ```bash
-python src/main.py
+python -m pip check
 ```
 
-## Resultado de referencia
+Resultado esperado:
+
+```text
+No broken requirements found.
+```
+
+## 10. Ejecución y resultados de referencia
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+python -m src.main
+```
+
+### Datos de entrada de referencia
+
+| Indicador | Cantidad |
+|---|---:|
+| Registros CSV | 10 |
+| Registros HTTP 500 | 3 |
+| Eventos JSON | 6 |
+| Direcciones IP únicas en eventos JSON | 3 |
+| Direcciones IP críticas | 2 |
+
+### Salida de referencia
 
 ```text
 TI-Metrics iniciado correctamente
@@ -67,19 +367,208 @@ Cantidad de IP críticas: 2
 Reporte generado en: data/report.json
 ```
 
-## Pruebas automatizadas
+El porcentaje de errores HTTP 500 se obtiene dividiendo
+la cantidad de registros con estado 500 entre el total
+de registros y multiplicando el resultado por 100.
 
-```bash
-python -m pytest src/ -v --cov=src --cov-report=term-missing
+Para los datos de referencia:
+
+```text
+(3 / 10) * 100 = 30.0 %
 ```
 
-Última verificación del Hito 1:
+### Reporte generado
 
-- 31 pruebas aprobadas.
-- 0 pruebas fallidas.
-- 99 % de cobertura global.
+El archivo `data/report.json` contiene tres campos principales:
 
-## Próximas etapas
+- `porcentaje_http_500`
+- `ips_criticas`
+- `geolocalizaciones`
 
-- Hito 2: Refactorización a Programación Orientada a Objetos y UML.
-- Hito 3: Consolidación de calidad, auditoría y defensa oral.
+Las direcciones IP críticas de referencia son:
+
+- `192.168.1.10`
+- `203.0.113.25`
+
+La primera pertenece a un rango privado y la segunda a un
+rango reservado para documentación (TEST-NET-3).
+
+No deben interpretarse las respuestas simuladas de geolocalización
+como ubicaciones geográficas reales de estas direcciones.
+
+Los resultados de geolocalización dependen de la respuesta
+del servicio externo y pueden contener valores `null`.
+
+La ejecución puede sobrescribir el reporte existente.
+
+## 11. Pruebas automatizadas y cobertura
+
+### Ejecutar la suite completa
+
+```bash
+python -m pytest src/ -v
+```
+
+### Ejecutar con cobertura de producción
+
+```bash
+python -m pytest src/ -q --cov=src/models --cov=src/parsers --cov=src/services --cov=src/utils --cov=src.main --cov-report=term-missing
+```
+
+El comando limita la medición a los módulos de producción,
+excluyendo los archivos de pruebas del cálculo.
+
+### Última validación técnica documentada
+
+**Fecha:** 13 de noviembre de 2026.
+
+| Indicador | Resultado |
+|---|---:|
+| Archivos de pruebas | 11 |
+| Pruebas aprobadas | 478 |
+| Pruebas fallidas | 0 |
+| Sentencias de producción | 358 |
+| Sentencias cubiertas | 357 |
+| Sentencias no cubiertas | 1 |
+| Cobertura de producción | 99.72 % |
+
+### Distribución de pruebas
+
+| Componente | Pruebas aprobadas |
+|---|---:|
+| Analizadores CSV, JSON y POO | 90 |
+| Métricas | 43 |
+| Geolocalización | 65 |
+| Reportes | 92 |
+| Funciones auxiliares | 161 |
+| Aplicación principal | 22 |
+| Integración | 5 |
+| **Total** | **478** |
+
+### Interpretación de la cobertura
+
+La cobertura calculada corresponde a:
+
+```text
+(357 / 358) * 100 = 99.72 %
+```
+
+La única sentencia no cubierta corresponde al `pass`
+del método abstracto `leer()` de `BaseLogParser`.
+
+Se conserva dicha implementación abstracta sin introducir
+ejecuciones artificiales para alcanzar el 100 %.
+
+La cobertura mide sentencias ejecutadas durante las pruebas.
+No garantiza la ausencia de errores ni equivale a una
+cobertura completa de ramas o escenarios posibles.
+
+### Estrategias de pruebas
+
+- Pruebas unitarias.
+- Pruebas parametrizadas.
+- Validación de entradas correctas e incorrectas.
+- Simulación de dependencias mediante mocks.
+- Verificación de excepciones y mensajes.
+- Verificación de abstracción, herencia y polimorfismo.
+- Comprobación de copias defensivas y encapsulamiento.
+- Pruebas de integración con archivos temporales.
+- Simulación de respuestas HTTP sin depender de la API real.
+
+## 12. Compatibilidad funcional entre hitos
+
+Se realizó una auditoría comparativa entre la versión
+procedural del Hito 1 y la arquitectura POO del Hito 2.
+
+| Indicador | Resultado |
+|---|---:|
+| Funciones originales conservadas | 12/12 |
+| Firmas de parámetros conservadas | 12/12 |
+| Funcionalidades originales documentadas | 8/8 |
+| Funciones de compatibilidad | 7 |
+| Comparaciones diferenciales satisfactorias | 15/15 |
+| Diferencias intencionales documentadas | 12 |
+
+Las siete funciones de compatibilidad permiten conservar
+los nombres de las operaciones procedurales refactorizadas
+mediante llamadas a las clases correspondientes.
+
+Los escenarios comparados conservaron los resultados
+funcionales esperados, incluyendo el 30.0 % de errores HTTP 500
+y las dos direcciones IP críticas.
+
+La conservación de nombres y parámetros no implica una
+retrocompatibilidad absoluta.
+
+Existen diferencias intencionales en las rutas de importación,
+validaciones de entradas, códigos de salida, ordenamiento
+de resultados y tratamiento de datos.
+
+Los detalles y limitaciones de la comparación se encuentran
+en la matriz de cumplimiento del Hito 2.
+
+## 13. Documentación técnica
+
+| Documento | Contenido |
+|---|---|
+| [Diagrama UML](docs/diagrama_clases.md) | Clases, dependencias y flujo de procesamiento. |
+| [Matriz de cumplimiento](docs/matriz_cumplimiento_hito2.md) | Requerimientos, criterios técnicos y compatibilidad. |
+| [Registro de asistencia de IA](PROMPTS.md) | Prompts, respuestas, análisis crítico y soluciones finales. |
+
+La documentación UML incluye tres diagramas Mermaid:
+
+1. Diagrama de clases.
+2. Diagrama de dependencias arquitectónicas.
+3. Diagrama del flujo de procesamiento.
+
+La matriz de cumplimiento documenta los cuatro requerimientos
+oficiales del Hito 2 y los resultados de la auditoría interna.
+
+## 14. Registro de asistencia de inteligencia artificial
+
+La asistencia de inteligencia artificial utilizada durante
+el desarrollo se documenta en [PROMPTS.md](PROMPTS.md).
+
+Cada registro contiene:
+
+- Fecha.
+- Módulo o función.
+- Prompt enviado.
+- Respuesta de la IA.
+- Análisis crítico.
+- Solución final.
+
+Las propuestas generadas se someten a revisión, adaptación
+y validación técnica antes de incorporarse al proyecto.
+
+## 15. Limitaciones técnicas
+
+- La geolocalización depende de la disponibilidad de una API externa.
+- La configuración predeterminada de la API utiliza HTTP sin cifrado.
+- Las respuestas simuladas no constituyen geolocalizaciones reales.
+- Las rutas relativas requieren ejecutar desde la raíz del proyecto
+  o desde un entorno que reproduzca la estructura esperada.
+- El reporte JSON no se guarda mediante escritura atómica.
+- El directorio de destino del reporte debe existir.
+- La cobertura de sentencias no garantiza la ausencia de errores.
+- Las comparaciones diferenciales no prueban compatibilidad absoluta.
+- Las dependencias no tienen versiones fijadas en requirements.txt.
+
+Estas limitaciones se documentan para mantener la transparencia
+técnica y orientar futuras mejoras.
+
+## 16. Estado del proyecto y próximas etapas
+
+| Etapa | Estado |
+|---|---|
+| Hito 1: Ingesta de datos, persistencia y API REST | Completado |
+| Hito 2: Implementación de arquitectura POO | Completado |
+| Hito 2: Validaciones y pruebas automatizadas | Completado |
+| Hito 2: Diagramas UML y auditoría de requerimientos | Completado |
+| Hito 2: Consolidación documental | En curso |
+| Hito 2: Integración y validación final | Pendiente |
+| Hito 3: Consolidación de calidad, auditoría y defensa oral | Pendiente |
+
+El proyecto continuará con la integración de los cambios,
+la validación final de los entregables y la preparación
+de la defensa académica.

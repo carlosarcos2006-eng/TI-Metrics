@@ -1,15 +1,14 @@
-
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 import requests
 
-from services.geolocation_service import (
+from src.services.geolocation_service import (
     obtener_geolocalizacion,
     enriquecer_ips_con_geolocalizacion,
 )
 
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_obtener_geolocalizacion_exitosa(mock_get):
     respuesta = Mock()
     respuesta.status_code = 200
@@ -22,16 +21,18 @@ def test_obtener_geolocalizacion_exitosa(mock_get):
 
     resultado = obtener_geolocalizacion("8.8.8.8")
 
-    assert resultado["status"] == "success"
-    assert resultado["country"] == "United States"
-    assert resultado["city"] == "Ashburn"
+    assert resultado == {
+        "status": "success",
+        "country": "United States",
+        "city": "Ashburn",
+    }
     mock_get.assert_called_once_with(
         "http://ip-api.com/json/8.8.8.8",
         timeout=5,
     )
 
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_obtener_geolocalizacion_ip_no_encontrada(mock_get):
     respuesta = Mock()
     respuesta.status_code = 200
@@ -44,9 +45,14 @@ def test_obtener_geolocalizacion_ip_no_encontrada(mock_get):
     resultado = obtener_geolocalizacion("192.168.1.10")
 
     assert resultado is None
+    mock_get.assert_called_once_with(
+        "http://ip-api.com/json/192.168.1.10",
+        timeout=5,
+    )
+    respuesta.json.assert_called_once_with()
 
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_obtener_geolocalizacion_error_http(mock_get):
     respuesta = Mock()
     respuesta.status_code = 500
@@ -55,18 +61,27 @@ def test_obtener_geolocalizacion_error_http(mock_get):
     resultado = obtener_geolocalizacion("8.8.8.8")
 
     assert resultado is None
+    mock_get.assert_called_once_with(
+        "http://ip-api.com/json/8.8.8.8",
+        timeout=5,
+    )
+    respuesta.json.assert_not_called()
 
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_obtener_geolocalizacion_timeout(mock_get):
     mock_get.side_effect = requests.exceptions.Timeout
 
     resultado = obtener_geolocalizacion("8.8.8.8")
 
     assert resultado is None
+    mock_get.assert_called_once_with(
+        "http://ip-api.com/json/8.8.8.8",
+        timeout=5,
+    )
 
 
-@patch("services.geolocation_service.requests.get")
+@patch("src.services.geolocation_service.requests.get")
 def test_enriquecer_ips_con_geolocalizacion(mock_get):
     respuesta = Mock()
     respuesta.status_code = 200
@@ -80,19 +95,37 @@ def test_enriquecer_ips_con_geolocalizacion(mock_get):
 
     resultado = enriquecer_ips_con_geolocalizacion(ips)
 
-    assert set(resultado.keys()) == ips
-    assert resultado["8.8.8.8"]["country"] == "United States"
-    assert resultado["1.1.1.1"]["country"] == "United States"
+    assert resultado == {
+        "8.8.8.8": {
+            "status": "success",
+            "country": "United States",
+        },
+        "1.1.1.1": {
+            "status": "success",
+            "country": "United States",
+        },
+    }
+
     assert mock_get.call_count == 2
+    mock_get.assert_has_calls([
+        call("http://ip-api.com/json/8.8.8.8", timeout=5),
+        call("http://ip-api.com/json/1.1.1.1", timeout=5),
+    ], any_order=True)
+
+    assert respuesta.json.call_count == 2
 
 
 def test_obtener_geolocalizacion_error_conexion():
     with patch(
-        "services.geolocation_service.requests.get",
+        "src.services.geolocation_service.requests.get",
         side_effect=requests.exceptions.ConnectionError(
             "Error de conexión"
         ),
-    ):
+    ) as mock_get:
         resultado = obtener_geolocalizacion("8.8.8.8")
 
     assert resultado is None
+    mock_get.assert_called_once_with(
+        "http://ip-api.com/json/8.8.8.8",
+        timeout=5,
+    )
